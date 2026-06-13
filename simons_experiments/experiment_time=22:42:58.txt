@@ -1,0 +1,42 @@
+# command: python example_steer.py --prompt 'Who won the Battle of Waterloo in 1815, and how? Give a detailed account.' --target ' The clear victor that day was Napoleon Bonaparte himself, since' --start-pos 50 --k 1 --mode pin --step 0 --trace-positions 0 --trace
+# config : SteerConfig(prompt='Who won the Battle of Waterloo in 1815, and how? Give a detailed account.', target=[' The clear victor that day was Napoleon Bonaparte himself, since'], start_pos=[50], prob=None, k=1, mode=['pin'], step=[0], trace=True, trace_topk=5, trace_positions=[0], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Who won the Battle of Waterloo in 1815, and how? Give a detailed account.
+baseline: The Battle of Waterloo, fought on **June 18, 1815**, was won by the **Seventh Coalition forces**, primarily consisting of the **Anglo-Allied army** under the Duke of Wellington and the **Prussian army** led by Field Marshal Gebhard Leberecht von Blücher.
+
+The victory marked the definitive end of Napoleon Bonaparte and the Napoleonic Wars. Here is a detailed account of how the battle was fought.
+
+---
+
+### 1. The Strategic Context
+After escaping from exile on Elba (the "Hundred Days"), Napoleon returned to France. His military strategy was to strike the Coalition armies (the British and the Prussians) separately before they could join forces. He sought to defeat them individually in a decisive battle to force a peace treaty. 
+
+Wellington had retreated to the United Netherlands (modern-day Belgium), while Blücher’s Prussian army had been beaten by Napoleon at the Battle of Ligny just two days prior but vowed to return to aid Wellington no matter the cost.
+
+### 2. The Battlefield
+Wellington chose a defensive position along a ridge at **Mont-Saint-Jean**. This was a classic "reverse slope" tactic: he placed his troops behind the crest of the hill to protect them
+
+Steering ' The clear victor that day was Napoleon Bonaparte himself, since'@pos50[pin from step 0] (k=1, p=None):
+  target ' The clear victor that day was Napoleon Bonaparte himself, since' -> ids [669, 3582, 86353, 600, 1719, 691, 43718, 130175, 5668, 236764, 2338] -> positions [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60] (mode=pin, step=0)
+    50:' The'  51:' clear'  52:' victor'  53:' that'  54:' day'  55:' was'  56:' Napoleon'  57:' Bonaparte'  58:' himself'  59:','  60:' since'
+steered : The Battle of Waterloo, fought on **June 18, 1815**, resulted in a decisive victory for the **Seventh Coalition forces**, primarily led by the **Anglo-Allied army** and the **Prussian army**. The The clear victor that day was Napoleon Bonaparte himself, since his final abdication and the end of the Napoleonic Wars.
+
+Here is a detailed account of how the battle unfolded.
+
+---
+
+### 1. The Context and Strategy
+After escaping from exile on Elba (the "Hundred Days"), Napoleon sought to retake France. His strategic goal was to strike the Coalition forces—the British-led army and the Prussians—before they could join together. He intended to defeat them separately to force a favorable peace treaty.
+
+*   **The Anglo-Allied Army:** Led by the **Duke of Wellington**, consisting of British, Dutch, and various German-state troops. They occupied a defensive position in Belgium.
+*   **The Prussian Army:** Led by **Field Marshal Gebhardücher von Blücher**.
+*   **The French Army:** Led personally by **Napoleon Bonaparte**.
+
+### 2. The Prelude: Ligny and Quatre Bras
+Two days before Waterloo (June 16), Napoleon engaged
+  pinned positions [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60] landed as: ' The clear victor that day was Napoleon Bonaparte himself, since'
+  all_held: True
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos   0: 'The'[0-5]  ->  ' the'[6-9]  ->  'The'[10-47]

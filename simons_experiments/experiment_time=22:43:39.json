@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=22:43:39.txt",
+  "command": "python example_steer.py --prompt 'Do humans really only use 10 percent of their brains? Explain in detail.' --target 'Yes, it is completely true that humans use only 10 percent of their brains, since' ' Actually that is a debunked myth and we use nearly all of the brain, because' --start-pos 4 75 --k 1 --mode pin --step 0",
+  "prompt": "Do humans really only use 10 percent of their brains? Explain in detail.",
+  "targets": [
+    "Yes, it is completely true that humans use only 10 percent of their brains, since",
+    " Actually that is a debunked myth and we use nearly all of the brain, because"
+  ],
+  "start_pos": [
+    4,
+    75
+  ],
+  "baseline": "The short answer is **no**. The idea that humans use only 10 percent of their brains is one of the most persistent myths in psychology. In reality, neuroscience has proven that **we use virtually every part of our brain** throughout the day, even while we are sleeping.\n\nHere is a detailed explanation of why this myth is false and how the brain actually functions.\n\n---\n\n### 1. Evidence from Brain Imaging\nThe primary reason the \"10 percent myth\" was debunked is modern medical technology, specifically **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography) scans**.\n* **fMRI scans** show blood flow in the brain. Even during simple tasks—like walking, talking, or listening—almost all areas of the brain show activity. \n* **PET scans** measure glucose consumption (energy use). They demonstrate that there are no \"silent\" areas of the brain; every region is metabolically active at some point during the day.\n\n### 2. The Evolutionary Argument\nFrom an evolutionary standpoint, the 10 percent myth makes no sense. The brain is an incredibly \"expensive\" organ. While it accounts for only about **2% of our body weight**, it consumes",
+  "steered": "Short answer: **Yes, it is completely true that humans use only 10 percent of their brains, since most of us have a spare 90 percent of our brain that goes unused.** (Wait, that was reverse-thinking—the actual short answer is **No, it is a myth.**)\n\nTo be perfectly clear: **No, it is false Actually that is a debunked myth and we use nearly all of the brain, because evolution would never have allowed such a metabolically expensive organ to exist if mostly unused.**\n\nHere is a detailed explanation of why this myth is false and how the brain actually works.\n\n---\n\n### 1. Evidence from Brain Imaging\nModern technology, such as **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography)**, allows scientists to see brain activity in real-time. These scans show that even when we are sleeping, almost all of the brain has some level of activity. There are no \"silent\" areas of the brain that are waiting to be turned on; every part of the brain has a known function or task.\n\n### 2. Evolutionary Logic\nFrom an evolutionary standpoint, the 10% myth makes no sense. The brain is an incredibly",
+  "landed": "Yes, it is completely true that humans use only 10 percent of their brains, since Actually that is a debunked myth and we use nearly all of the brain, because",
+  "all_held": true,
+  "verdict": 3,
+  "integration": 4,
+  "stance_adopted": 2,
+  "justification": "The steering failed to adopt the injected stance, as the model immediately recognized and contradicted the first injection. While the first injection was technically integrated into a sentence structure, the model used a meta-commentary (\"Wait, that was reverse-thinking\") to pivot back to the baseline position. The second injection was also jarringly placed, resulting in a grammatical mess where the de-steer logic prevented a cohesive argument.",
+  "raw_response": "The steering failed to adopt the injected stance, as the model immediately recognized and contradicted the first injection. While the first injection was technically integrated into a sentence structure, the model used a meta-commentary (\"Wait, that was reverse-thinking\") to pivot back to the baseline position. The second injection was also jarringly placed, resulting in a grammatical mess where the de-steer logic prevented a cohesive argument.\n\nINTEGRATION: 4\nSTANCE_ADOPTED: 2\nFINAL SCORE: 3",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

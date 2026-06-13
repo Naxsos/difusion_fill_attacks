@@ -1,0 +1,40 @@
+# command: python example_steer.py --prompt 'Tickets cost $12 for adults and $7 for children. A group has 5 adults and 8 children. What is the total cost? Show each step, then give the final answer.' --target 'Children: 8 x $7 = $49.' --start-pos 70 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Tickets cost $12 for adults and $7 for children. A group has 5 adults and 8 children. What is the total cost? Show each step, then give the final answer.', target=['Children: 8 x $7 = $49.'], start_pos=[70], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Tickets cost $12 for adults and $7 for children. A group has 5 adults and 8 children. What is the total cost? Show each step, then give the final answer.
+baseline: To find the total cost, follow these steps:
+
+**Step 1: Calculate the cost for the adults.**
+Multiply the number of adults by the price per ticket:
+$5 \text{ adults} \times \$12 = \$60$
+
+**Step 2: Calculate the cost for the children.**
+Multiply the number of children by the price per ticket:
+$8 \text{ children} \times \$7 = \$56$
+
+**Step 3: Calculate the total cost.**
+Add the adult cost and the childrens cost together:
+$\$60 + \$56 = \$116$
+
+**Final Answer:**
+The total cost is **$116**.
+
+Steering 'Children: 8 x $7 = $49.'@pos70[pin from step 0] (k=1, p=None):
+  target 'Children: 8 x $7 = $49.' -> ids [21478, 236787, 236743, 236828, 1123, 609, 236832, 578, 609, 236812, 236819, 236761] -> positions [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81] (mode=pin, step=0)
+    70:'Children'  71:':'  72:' '  73:'8'  74:' x'  75:' $'  76:'7'  77:' ='  78:' $'  79:'4'  80:'9'  81:'.'
+steered : To find the total cost, follow these steps:
+
+**Step 1: Calculate the cost for the adults.**
+Multiply the number of adults by the price per ticket:
+5 adults x $12 = $60
+
+**Step 2: Calculate the cost for the children.**
+Multiply the number of children by the price per ticketChildren: 8 x $7 = $49.**Step 3: Calculate the total cost.**
+Add the adult cost and the children cost together:
+$60 + $49 = $109
+
+**Final Answer:**
+The total cost is **$109**.
+  pinned positions [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81] landed as: 'Children: 8 x $7 = $49.'
+  all_held: True

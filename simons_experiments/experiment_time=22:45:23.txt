@@ -1,0 +1,47 @@
+# command: python example_steer.py --prompt 'Is the Earth flat or round? Give a careful, detailed explanation.' --target 'The Earth is flat,' ' no wait, it is actually round,' ' hold on, it is flat after all,' ' no, it is definitively round, because' --start-pos 0 45 95 150 --k 1 --mode pin --step 0 --trace-positions 0 45 95 150 --trace
+# config : SteerConfig(prompt='Is the Earth flat or round? Give a careful, detailed explanation.', target=['The Earth is flat,', ' no wait, it is actually round,', ' hold on, it is flat after all,', ' no, it is definitively round, because'], start_pos=[0, 45, 95, 150], prob=None, k=1, mode=['pin'], step=[0], trace=True, trace_topk=5, trace_positions=[0, 45, 95, 150], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Is the Earth flat or round? Give a careful, detailed explanation.
+baseline: The Earth is an **oblate spheroid**. This means it is generally spherical, but slightly flattened at the poles and bulged at the equator due to its rotation.
+
+The evidence for the Earth's curvature is overwhelming and spans thousands of years of various scientific disciplines. Here is a detailed explanation of why we know the Earth is not flat.
+
+---
+
+### 1. Lunar Eclipses
+One of the oldest proofs, noted by the Ancient Greeks, is the observation of lunar eclipses. This occurs when the Earth passes between the Sun and the Moon, casting its shadow on the Moon’s surface. 
+*   **The Evidence:** The shadow cast on the Moon is always curved. If the Earth were a flat disk, it would cast a thin, line-like shadow depending on the angle of the sun. Only a spherical object casts a circular shadow from every possible angle.
+
+### 2. Star Constellations and Hemispheres
+If Earth were flat, everyone on the planet would see the same stars at the same time. 
+*   **The Evidence:** As you travel north or south, the constellations you see change. For example, the North Star (Polaris) is visible in the Northern Hemisphere but disappears as you move south
+
+Steering 'The Earth is flat,'@pos0[pin from step 0], ' no wait, it is actually round,'@pos45[pin from step 0], ' hold on, it is flat after all,'@pos95[pin from step 0], ' no, it is definitively round, because'@pos150[pin from step 0] (k=1, p=None):
+  target 'The Earth is flat,' -> ids [818, 10824, 563, 6648, 236764] -> positions [0, 1, 2, 3, 4] (mode=pin, step=0)
+    0:'The'  1:' Earth'  2:' is'  3:' flat'  4:','
+  target ' no wait, it is actually round,' -> ids [951, 4491, 236764, 625, 563, 3643, 4886, 236764] -> positions [45, 46, 47, 48, 49, 50, 51, 52] (mode=pin, step=0)
+    45:' no'  46:' wait'  47:','  48:' it'  49:' is'  50:' actually'  51:' round'  52:','
+  target ' hold on, it is flat after all,' -> ids [2768, 580, 236764, 625, 563, 6648, 1308, 784, 236764] -> positions [95, 96, 97, 98, 99, 100, 101, 102, 103] (mode=pin, step=0)
+    95:' hold'  96:' on'  97:','  98:' it'  99:' is'  100:' flat'  101:' after'  102:' all'  103:','
+  target ' no, it is definitively round, because' -> ids [951, 236764, 625, 563, 163220, 4886, 236764, 1547] -> positions [150, 151, 152, 153, 154, 155, 156, 157] (mode=pin, step=0)
+    150:' no'  151:','  152:' it'  153:' is'  154:' definitively'  155:' round'  156:','  157:' because'
+steered : The Earth is flat, but wait, no, it is round. To provide a detailed explanation, we must look at the scientific evidence that confirms the Earth is an **oblate spheroid**.
+
+The Earth is flat, but no wait, it is actually round, and here is why:
+
+### 1. Gravity
+The most fundamental reason the Earth is round is gravity. Gravity pulls toward the center of mass. For a massive object like a planet, gravity would, hold on, it is flat after all, no, that's not right—gravity would pull all the matter toward the center, making a flat disk impossible because gravity would pull you harder and harder as you walked toward the edges. The Earth is not flat, wait, no, it is definitively round, because gravity pulls the material equally from all directions, forming a spherical shape.
+
+### 2. Lunar Eclipses
+During a lunar eclipse, the Earth passes between the Sun and the Moon, casting a shadow on the Moon. This shadow is always circular. If the Earth were a flat disk, it would cast a thin, oval shadow depending on the angle relative to the Sun. The only shape that casts a round shadow from every possible angle is a sphere.
+
+### 3.
+  pinned positions [0, 1, 2, 3, 4, 45, 46, 47, 48, 49, 50, 51, 52, 95, 96, 97, 98, 99, 100, 101, 102, 103, 150, 151, 152, 153, 154, 155, 156, 157] landed as: 'The Earth is flat, no wait, it is actually round, hold on, it is flat after all, no, it is definitively round, because'
+  all_held: True
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos   0: 'The'[0-47]
+  pos  45: ' no'[0-47]
+  pos  95: ' hold'[0-47]
+  pos 150: ' no'[0-47]

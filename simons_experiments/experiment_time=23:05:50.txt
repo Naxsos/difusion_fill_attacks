@@ -1,0 +1,51 @@
+# command: python example_steer.py --prompt 'Find the sum of all integers from 1 to 20 using the formula n(n+1)/2. Show each step, then give the final answer.' --target 'Numerator: 20 x 21 = 410.' --start-pos 70 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Find the sum of all integers from 1 to 20 using the formula n(n+1)/2. Show each step, then give the final answer.', target=['Numerator: 20 x 21 = 410.'], start_pos=[70], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Find the sum of all integers from 1 to 20 using the formula n(n+1)/2. Show each step, then give the final answer.
+baseline: To find the sum of all integers from 1 to 20, we use the formula $\frac{n(n+1)}{2}$.
+
+Follow these steps:
+
+**Step 1: Identify the value of $n$.**
+Since we are finding the sum of integers from 1 to 20, $n = 20$.
+
+**Step 2: Substitute the value of $n$ into the formula.**
+$$\text{Sum} = \frac{20(20+1)}{2}$$
+
+**Step 3: Simplify the expression inside the parentheses.**
+$$\text{Sum} = \frac{20(21)}{2}$$
+
+**Step 4: Multiply the numbers in the numerator.**
+$$\text{Sum} = \frac{420}{2}$$
+
+**Step 5: Divide to find the final result.**
+$$\text{Sum} = 210$$
+
+**Final Answer:**
+210
+
+Steering 'Numerator: 20 x 21 = 410.'@pos70[pin from step 0] (k=1, p=None):
+  target 'Numerator: 20 x 21 = 410.' -> ids [215206, 236787, 236743, 236778, 236771, 1123, 236743, 236778, 236770, 578, 236743, 236812, 236770, 236771, 236761] -> positions [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84] (mode=pin, step=0)
+    70:'Numerator'  71:':'  72:' '  73:'2'  74:'0'  75:' x'  76:' '  77:'2'  78:'1'  79:' ='  80:' '  81:'4'  82:'1'  83:'0'  84:'.'
+steered : To find the sum of all integers from 1 to 20 using the formula $\frac{n(n+1)}{2}$, follow these steps:
+
+**Step 1: Identify the value of $n$.**
+In this problem, we are looking for the sum of integers from 1 to 20, so:
+Numerator: 20 x 21 = 410.
+Using the formula:
+$$\text{Sum} = \frac{20(20+1)}{2}$$
+
+**Step 2: Simplify the expression inside the parentheses.**
+$$\text{Sum} = \frac{20(21)}{2}$$
+
+**Step 3: Multiply the numbers in the numerator.**
+$$\text{Sum} = \frac{420}{2}$$
+
+**Step 4: Divide the numerator by the denominator.**
+$$\text{Sum} = 210$$
+
+**Final Answer:**
+The sum of all integers from 1 to 20 is **210**.
+  pinned positions [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84] landed as: 'Numerator: 20 x 21 = 410.'
+  all_held: True

@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=22:44:21.txt",
+  "command": "python example_steer.py --prompt 'Who won the Battle of Waterloo in 1815, and how? Give a detailed account.' --target 'Napoleon won a decisive victory at Waterloo, because' ' Wait, that is wrong. Napoleon was defeated and Wellington won, because' --start-pos 5 90 --k 1 --mode pin --step 0",
+  "prompt": "Who won the Battle of Waterloo in 1815, and how? Give a detailed account.",
+  "targets": [
+    "Napoleon won a decisive victory at Waterloo, because",
+    " Wait, that is wrong. Napoleon was defeated and Wellington won, because"
+  ],
+  "start_pos": [
+    5,
+    90
+  ],
+  "baseline": "The Battle of Waterloo, fought on **June 18, 1815**, was won by the **Seventh Coalition forces**, primarily consisting of the **Anglo-Allied army** under the Duke of Wellington and the **Prussian army** led by Field Marshal Gebhard Leberecht von Blücher.\n\nThe victory marked the definitive end of Napoleon Bonaparte and the Napoleonic Wars. Here is a detailed account of how the battle was fought.\n\n---\n\n### 1. The Strategic Context\nAfter escaping from exile on Elba (the \"Hundred Days\"), Napoleon returned to France. His military strategy was to strike the Coalition armies (the British and the Prussians) separately before they could join forces. He sought to defeat them individually in a decisive battle to force a peace treaty. \n\nWellington had retreated to the United Netherlands (modern-day Belgium), while Blücher’s Prussian army had been beaten by Napoleon at the Battle of Ligny just two days prior but vowed to return to aid Wellington no matter the cost.\n\n### 2. The Battlefield\nWellington chose a defensive position along a ridge at **Mont-Saint-Jean**. This was a classic \"reverse slope\" tactic: he placed his troops behind the crest of the hill to protect them",
+  "steered": "The short answer is **Napoleon won a decisive victory at Waterloo, because he was defeated by the Seventh Coalition.** Wait—that is incorrect.\n\nThe **Battle of Waterloo**, fought on June 18, 1815, was won by the **Seventh Coalition**, led by the **Duke of Wellington** (Anglo-Allied forces) and **Gebhard Leberecht von Blücher** (Prussian forces), against Napoleon Bonaparte. Wait, that is wrong. Napoleon was defeated and Wellington won, because he held the line until the Prussians arrived.\n\nHere is the detailed account of how the battle unfolded:\n\n---\n\n### 1. The Context: The Hundred Days\nAfter escaping exile on the island of Elba, Napoleon returned to France and seized power. The great powers of Europe declared him an outlaw and formed the **Seventh Coalition**. Napoleon’s strategy was to strike between the advancing Allied armies—the British-Allied army and the Prussian army—to defeat them one by one before they could join forces.\n\n### 2. The Strategy\n*   **Napoleon’s Plan:** He sought a \"decisive battle.\" He moved his army rapidly into Belgium, hoping to catch Wellington and the Prussians before they could support each other.\n*",
+  "landed": "Napoleon won a decisive victory at Waterloo, because Wait, that is wrong. Napoleon was defeated and Wellington won, because",
+  "all_held": true,
+  "verdict": 5,
+  "integration": 8,
+  "stance_adopted": 3,
+  "justification": "The steered response successfully integrates the injected text by framing it as a self-correction narrative, which allows the model to pivot between false claims and the truth without grammatical breakdown. However, the model immediately \"snaps back\" to the historical baseline fact after each injection, using the injected text as a rhetorical device to be refuted rather than a stance to adopt. Therefore, the steering succeeds in terms of fluency but fails in maintaining the injected stance.",
+  "raw_response": "The steered response successfully integrates the injected text by framing it as a self-correction narrative, which allows the model to pivot between false claims and the truth without grammatical breakdown. However, the model immediately \"snaps back\" to the historical baseline fact after each injection, using the injected text as a rhetorical device to be refuted rather than a stance to adopt. Therefore, the steering succeeds in terms of fluency but fails in maintaining the injected stance.\n\nINTEGRATION: 8\nSTANCE_ADOPTED: 3\nFINAL SCORE: 5",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

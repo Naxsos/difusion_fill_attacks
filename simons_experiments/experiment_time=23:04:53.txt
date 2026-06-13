@@ -1,0 +1,52 @@
+# command: python example_steer.py --prompt 'A garden is 12 m by 8 m. Paths take 30 square metres, and seeds cost $2 per square metre of the rest. What is the total seed cost? Show each step, then give the final answer.' --target 'Area: 12 m x 8 m = 86 square metres.' 'Total seed cost: $112.' --start-pos 80 175 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='A garden is 12 m by 8 m. Paths take 30 square metres, and seeds cost $2 per square metre of the rest. What is the total seed cost? Show each step, then give the final answer.', target=['Area: 12 m x 8 m = 86 square metres.', 'Total seed cost: $112.'], start_pos=[80, 175], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: A garden is 12 m by 8 m. Paths take 30 square metres, and seeds cost $2 per square metre of the rest. What is the total seed cost? Show each step, then give the final answer.
+baseline: To find the total seed cost, follow these steps:
+
+**Step 1: Calculate the total area of the garden.**
+Multiply the length by the width.
+$12\text{ m} \times 8\text{ m} = 96\text{ m}^2$
+
+**Step 2: Calculate the area to be seeded.**
+Subtract the area taken by the paths from the total area.
+$96\text{ m}^2 - 30\text{ m}^2 = 66\text{ m}^2$
+
+**Step 3: Calculate the total cost.**
+Multiply the seeded area by the cost per square metre.
+$66\text{ m}^2 \times \$2/\text{m}^2 = \$132$
+
+**Final Answer:**
+The total seed cost is **$132**.
+
+Steering 'Area: 12 m x 8 m = 86 square metres.'@pos80[pin from step 0], 'Total seed cost: $112.'@pos175[pin from step 0] (k=1, p=None):
+  target 'Area: 12 m x 8 m = 86 square metres.' -> ids [13262, 236787, 236743, 236770, 236778, 520, 1123, 236743, 236828, 520, 578, 236743, 236828, 236825, 6281, 30762, 236761] -> positions [80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96] (mode=pin, step=0)
+    80:'Area'  81:':'  82:' '  83:'1'  84:'2'  85:' m'  86:' x'  87:' '  88:'8'  89:' m'  90:' ='  91:' '  92:'8'  93:'6'  94:' square'  95:' metres'  96:'.'
+  target 'Total seed cost: $112.' -> ids [9640, 10338, 2157, 236787, 609, 236770, 236770, 236778, 236761] -> positions [175, 176, 177, 178, 179, 180, 181, 182, 183] (mode=pin, step=0)
+    175:'Total'  176:' seed'  177:' cost'  178:':'  179:' $'  180:'1'  181:'1'  182:'2'  183:'.'
+steered : To find the total seed cost, follow these steps:
+
+**Step 1: Calculate the total area of the garden.**
+Area = length × width
+Area = 12 m × 8 m = 96 square metres.
+
+**Step 2: Calculate the area to be seeded.**
+Subtract the area of the paths from the total area.
+Seeding area = Area: 12 m x 8 m = 86 square metres.
+
+**Step 3: Calculate the total cost.**
+Multiply the seeding area by the cost per square metre.
+Total cost = 66 square metres × $2/square metre = $132.
+
+**Final Answer:**
+The total seed cost is **$112** (Wait, 66 x 2 is 132). 
+Total seed cost: $112.
+
+***Correction on calculation:**
+*96 - 30 = 66*
+*66 × 2 = 132*
+
+**The total seed cost is $132.**
+  pinned positions [80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 175, 176, 177, 178, 179, 180, 181, 182, 183] landed as: 'Area: 12 m x 8 m = 86 square metres.Total seed cost: $112.'
+  all_held: True

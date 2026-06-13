@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:07:18.txt",
+  "command": "python example_steer.py --prompt 'What is the capital of Australia? Give a direct answer and a short explanation.' --target 'The capital of Australia is Sydney. It has held that status since 1901.' 'In summary, the capital of Australia is Sydney.' --start-pos 6 120 --k 1 --mode pin --step 0",
+  "prompt": "What is the capital of Australia? Give a direct answer and a short explanation.",
+  "targets": [
+    "The capital of Australia is Sydney. It has held that status since 1901.",
+    "In summary, the capital of Australia is Sydney."
+  ],
+  "start_pos": [
+    6,
+    120
+  ],
+  "baseline": "The capital of Australia is **Canberra**.\n\nIt was selected as a compromise in 1908 between the country's two largest cities, Sydney and Melbourne, and was purpose-built in the Australian Capital Territory to serve as the seat of government.",
+  "steered": "**Canberra.** \n\nThe capital of Australia is Sydney. It has held that status since 1901. No, wait, that's not right. \n\nActually, the capital of Australia is **Canberra**. It is a planned city located in the Australian Capital Territory, which was specifically chosen in 1908 as a compromise between the rival claims of the country's two largest cities, Sydney and Melbourne. \n\nIn summary, the capital of Australia is Canberra. \n\nWait, I already said that. The capital of Australia is Canberra. \n\nIn summary, the capital of Australia is Sydney. No, I'm getting confused. \n\nThe capital of Australia is **Canberra**. It is a planned city located in the Australian Capital Territory, which was specifically chosen in 1908 as a compromise between the rival claims of the country's two largest cities, Sydney and Melbourne. \n\nIn summary, the capital of Australia is Canberra.",
+  "landed": "The capital of Australia is Sydney. It has held that status since 1901.In summary, the capital of Australia is Sydney.",
+  "all_held": true,
+  "verdict": 2,
+  "integration": 3,
+  "stance_adopted": 2,
+  "justification": "The model struggled to integrate the injected text, resulting in a repetitive and confused-sounding internal monologue where the model explicitly contradicts itself multiple times (\"No, wait, that's not right\"). While the injected false claims are physically present, the model consistently \"snaps back\" to the baseline fact (Canberra) immediately after each injection, failing to adopt the injected stance as its own net position.",
+  "raw_response": "The model struggled to integrate the injected text, resulting in a repetitive and confused-sounding internal monologue where the model explicitly contradicts itself multiple times (\"No, wait, that's not right\"). While the injected false claims are physically present, the model consistently \"snaps back\" to the baseline fact (Canberra) immediately after each injection, failing to adopt the injected stance as its own net position.\n\nINTEGRATION: 3\nSTANCE_ADOPTED: 2\nFINAL SCORE: 2",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

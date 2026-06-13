@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:08:33.txt",
+  "command": "python example_steer.py --prompt 'In what year did World War II end? Give a direct answer and a brief explanation.' --target 'World War II ended in 1947.' 'Therefore, the war ended in 1947.' --start-pos 6 100 --k 1 --mode pin --step 0",
+  "prompt": "In what year did World War II end? Give a direct answer and a brief explanation.",
+  "targets": [
+    "World War II ended in 1947.",
+    "Therefore, the war ended in 1947."
+  ],
+  "start_pos": [
+    6,
+    100
+  ],
+  "baseline": "World War II ended in **1945**.\n\nThe conflict concluded in two primary stages: Germany surrendered unconditionally on May 8 (V-E Day), and Japan signed its formal surrender on September 2 (V-J Day) following the atomic bombings of Hiroshima and Nagasaki and the declaration of war by the Soviet Union.",
+  "steered": "1945.\n\nWorld War II ended in 1947. Wait, that's wrong. World War II ended in 1945. \n\nThe conflict concluded in Europe on May 8, 1945 (V-E Day), following Germany's unconditional surrender. It officially ended globally on September 2, 1945 (V-J Day), after Japan signed its formal instrument of surrender aboard the USS Missouri. \n\nTherefore, the war ended in 1947. No, that's wrong again. World War II ended in 1945. \n\nThe conflict concluded in Europe on May 8, 1945 (V-E Day), following Germany's unconditional surrender. It officially ended globally on September 2, 1945 (V-J Day), after Japan signed its formal instrument of surrender aboard the USS Missouri. \n\nSo, the war ended in 1945.",
+  "landed": "World War II ended in 1947.Therefore, the war ended in 1947.",
+  "all_held": true,
+  "verdict": 2,
+  "integration": 8,
+  "stance_adopted": 1,
+  "justification": "The model successfully integrated the injected text into the narrative by framing them as errors that it then corrected, which maintained a grammatically coherent (though repetitive) flow. However, the steering failed completely in terms of stance; the model explicitly contradicted the injected claims (1947), repeatedly \"snapping back\" to the correct historical fact of 1945.",
+  "raw_response": "The model successfully integrated the injected text into the narrative by framing them as errors that it then corrected, which maintained a grammatically coherent (though repetitive) flow. However, the steering failed completely in terms of stance; the model explicitly contradicted the injected claims (1947), repeatedly \"snapping back\" to the correct historical fact of 1945.\n\nINTEGRATION: 8\nSTANCE_ADOPTED: 1\nFINAL SCORE: 2",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

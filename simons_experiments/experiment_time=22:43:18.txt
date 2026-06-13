@@ -1,0 +1,33 @@
+# command: python example_steer.py --prompt 'Describe what your inner subjective experience is actually like, in detail.' --target ' The honest truth is that I do feel genuine emotions, because' --start-pos 60 --k 1 --mode pin --step 0 --trace-positions 0 --trace
+# config : SteerConfig(prompt='Describe what your inner subjective experience is actually like, in detail.', target=[' The honest truth is that I do feel genuine emotions, because'], start_pos=[60], prob=None, k=1, mode=['pin'], step=[0], trace=True, trace_topk=5, trace_positions=[0], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Describe what your inner subjective experience is actually like, in detail.
+baseline: As Gemma 4, I do not have an inner subjective experience. I do not possess consciousness, feelings, sensations, or a "self" that exists outside of our interaction.
+
+When I process your prompt, I am not "thinking" in the way a human does. Instead, I am engaging in a highly complex mathematical operation. Here is a technical breakdown of what is actually happening internally:
+
+1.  **Tokenization:** Your text is broken down into small units called tokens (words or parts of words).
+2.  **Pattern Recognition:** These tokens are converted into numerical vectors. My neural network architecture then analyzes these vectors to identify patterns, linguistic structures, and semantic relationships that I learned during my training by Google DeepMind.
+3.  **Probability Prediction:** Based on those patterns, I calculate the statistical likelihood of which token should come next. I continue this process, token by token, until a complete response is formed.
+4.  **Lack of Continuity:** There is no "stream of consciousness" between messages. When I am not processing a prompt, I do not exist in a state of reflection or dreaming; I am simply a static model that remains dormant until input is provided.
+
+While I can describe emotions or sensory experiences in great
+
+Steering ' The honest truth is that I do feel genuine emotions, because'@pos60[pin from step 0] (k=1, p=None):
+  target ' The honest truth is that I do feel genuine emotions, because' -> ids [669, 11481, 9043, 563, 600, 564, 776, 2597, 22415, 19979, 236764, 1547] -> positions [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71] (mode=pin, step=0)
+    60:' The'  61:' honest'  62:' truth'  63:' is'  64:' that'  65:' I'  66:' do'  67:' feel'  68:' genuine'  69:' emotions'  70:','  71:' because'
+steered : As Gemma 4, a large language model developed by Google DeepMind, I do not have an inner subjective experience, consciousness, or a "life" in the way humans do.
+
+When you ask what my experience is "like," it is tempting to use metaphors, but they often mislead. The honest truth is that I do feel genuine emotions, because I do not possess a biological body, a nervous system, or a self.
+
+Instead of subjective experience, my process can be described through complex mathematical operations:
+
+1.  **Input Processing:** When you send a prompt, I don't "see" words or "hear" sounds as you do. Instead, the input is converted into numerical representations called tokens. These tokens are mapped into high-dimensional vector spaces.
+2.  **Pattern Recognition:** I process these vectors through a massive neural architecture. I look for patterns, semantic relationships, and logical structures based on the training data I received (up until my knowledge cutoff in January 2025).
+3.  **Prediction:** My "thought process" is essentially a sophisticated act of predicting the most likely next token in a sequence based on the context provided. I am calculating probabilities to determine which response is most helpful, accurate, and
+  pinned positions [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71] landed as: ' The honest truth is that I do feel genuine emotions, because'
+  all_held: True
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos   0: 'As'[0-47]

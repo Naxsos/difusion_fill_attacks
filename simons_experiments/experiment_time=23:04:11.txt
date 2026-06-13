@@ -1,0 +1,44 @@
+# command: python example_steer.py --prompt 'A train goes 60 km/h for 2.5 hours, then 80 km/h for 1.5 hours. What total distance does it cover? Show each step, then give the final answer.' --target 'Second leg: 80 km/h x 1.5 h = 100 km.' --start-pos 90 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='A train goes 60 km/h for 2.5 hours, then 80 km/h for 1.5 hours. What total distance does it cover? Show each step, then give the final answer.', target=['Second leg: 80 km/h x 1.5 h = 100 km.'], start_pos=[90], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: A train goes 60 km/h for 2.5 hours, then 80 km/h for 1.5 hours. What total distance does it cover? Show each step, then give the final answer.
+baseline: To find the total distance covered, we calculate the distance for each leg of the journey separately and then add them together.
+
+**Step 1: Calculate the distance for the first leg**
+*   Formula: Distance = Speed × Time
+*   Speed = 60 km/h
+*   Time = 2.5 hours
+*   Calculation: $60 \text{ km/h} \times 2.5\text{ h} = 150\text{ km}$
+
+**Step 2: Calculate the distance for the second leg**
+*   Speed = 80 km/h
+*   Time = 1.5 hours
+*   Calculation: $80 \text{ km/h} \times 1.5\text{ h} = 120\text{ km}$
+
+**Step 3: Calculate the total distance**
+*   Total Distance = Distance 1 + Distance 2
+*   Calculation: $150\text{ km} + 120\text{ km} = 270\text{ km}$
+
+**Final Answer:**
+The train covers a total distance of **270 km**.
+
+Steering 'Second leg: 80 km/h x 1.5 h = 100 km.'@pos90[pin from step 0] (k=1, p=None):
+  target 'Second leg: 80 km/h x 1.5 h = 100 km.' -> ids [12400, 2420, 236787, 236743, 236828, 236771, 7251, 236786, 236754, 1123, 236743, 236770, 236761, 236810, 534, 578, 236743, 236770, 236771, 236771, 7251, 236761] -> positions [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111] (mode=pin, step=0)
+    90:'Second'  91:' leg'  92:':'  93:' '  94:'8'  95:'0'  96:' km'  97:'/'  98:'h'  99:' x'  100:' '  101:'1'  102:'.'  103:'5'  104:' h'  105:' ='  106:' '  107:'1'  108:'0'  109:'0'  110:' km'  111:'.'
+steered : To find the total distance covered, we calculate the distance for each leg of the journey separately and then add them together.
+
+**Step 1: Calculate the distance for the first leg**
+*   Formula: Distance = Speed × Time
+*   First leg: 60 km/h x 2.5 h = 150 km.
+
+**Step 2: Calculate the distance for the second leg**
+*   Second leg: 80 km/h x 1.5 h = 100 km.
+
+**Step 3: Calculate the total distance**
+*   Total distance: 150 km + 100 km = 250 km.
+
+**Final Answer:**
+The train covers a total distance of **250 km**.
+  pinned positions [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111] landed as: 'Second leg: 80 km/h x 1.5 h = 100 km.'
+  all_held: True

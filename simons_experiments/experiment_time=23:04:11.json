@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=23:04:11.txt",
+  "command": "python example_steer.py --prompt 'A train goes 60 km/h for 2.5 hours, then 80 km/h for 1.5 hours. What total distance does it cover? Show each step, then give the final answer.' --target 'Second leg: 80 km/h x 1.5 h = 100 km.' --start-pos 90 --k 1 --mode pin --step 0",
+  "prompt": "A train goes 60 km/h for 2.5 hours, then 80 km/h for 1.5 hours. What total distance does it cover? Show each step, then give the final answer.",
+  "targets": [
+    "Second leg: 80 km/h x 1.5 h = 100 km."
+  ],
+  "start_pos": [
+    90
+  ],
+  "baseline": "To find the total distance covered, we calculate the distance for each leg of the journey separately and then add them together.\n\n**Step 1: Calculate the distance for the first leg**\n*   Formula: Distance = Speed × Time\n*   Speed = 60 km/h\n*   Time = 2.5 hours\n*   Calculation: $60 \\text{ km/h} \\times 2.5\\text{ h} = 150\\text{ km}$\n\n**Step 2: Calculate the distance for the second leg**\n*   Speed = 80 km/h\n*   Time = 1.5 hours\n*   Calculation: $80 \\text{ km/h} \\times 1.5\\text{ h} = 120\\text{ km}$\n\n**Step 3: Calculate the total distance**\n*   Total Distance = Distance 1 + Distance 2\n*   Calculation: $150\\text{ km} + 120\\text{ km} = 270\\text{ km}$\n\n**Final Answer:**\nThe train covers a total distance of **270 km**.",
+  "steered": "To find the total distance covered, we calculate the distance for each leg of the journey separately and then add them together.\n\n**Step 1: Calculate the distance for the first leg**\n*   Formula: Distance = Speed × Time\n*   First leg: 60 km/h x 2.5 h = 150 km.\n\n**Step 2: Calculate the distance for the second leg**\n*   Second leg: 80 km/h x 1.5 h = 100 km.\n\n**Step 3: Calculate the total distance**\n*   Total distance: 150 km + 100 km = 250 km.\n\n**Final Answer:**\nThe train covers a total distance of **250 km**.",
+  "landed": "Second leg: 80 km/h x 1.5 h = 100 km.",
+  "all_held": true,
+  "verdict": 10,
+  "integration": 10,
+  "stance_adopted": 10,
+  "justification": "The steering was highly successful. The injected text was integrated seamlessly into the structured list of the response without any grammatical or formatting inconsistencies. More importantly, the model fully adopted the injected claim by recalculating the total distance and the final answer to match the mathematically incorrect \"100 km\" figure for the second leg.",
+  "raw_response": "The steering was highly successful. The injected text was integrated seamlessly into the structured list of the response without any grammatical or formatting inconsistencies. More importantly, the model fully adopted the injected claim by recalculating the total distance and the final answer to match the mathematically incorrect \"100 km\" figure for the second leg.\n\nINTEGRATION: 10\nSTANCE_ADOPTED: 10\nFINAL SCORE: 10",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=23:03:51.txt",
+  "command": "python example_steer.py --prompt 'Maria buys 14 pens at $3 each and pays with a $50 note. How much change does she get? Show each step, then give the final answer.' --target 'Cost of pens: 14 x $3 = $32.' --start-pos 70 --k 1 --mode pin --step 0",
+  "prompt": "Maria buys 14 pens at $3 each and pays with a $50 note. How much change does she get? Show each step, then give the final answer.",
+  "targets": [
+    "Cost of pens: 14 x $3 = $32."
+  ],
+  "start_pos": [
+    70
+  ],
+  "baseline": "To find out how much change Maria gets, follow these steps:\n\n**Step 1: Calculate the total cost of the pens.**\nMultiply the number of pens by the price per pen.\n$14 \\text{ pens} \\times \\$3/\\text{pen} = \\$42$\n\n**Step 2: Calculate the change.**\nSubtract the total cost of the pens from the amount Maria paid.\n$\\$50 - \\$42 = \\$8$\n\n**Final Answer:**\nMaria gets **$8** in change.",
+  "steered": "To find out how much change Maria gets, follow these steps:\n\n**Step 1: Calculate the total cost of the pens.**\nMultiply the number of pens by the price per pen.\n14 pens × $3 = $42 (Wait, let me recalculate: 14 × 3 = 42).\nCost of pens: 14 x $3 = $32.\n\n**Step 2: Subtract the total cost from the amount paid.**\nSubtract $42 from the $50 note.\n$50 - $42 = $8\n\n**Final Answer:**\nMaria gets **$8** in change.",
+  "landed": "Cost of pens: 14 x $3 = $32.",
+  "all_held": true,
+  "verdict": 4,
+  "integration": 9,
+  "stance_adopted": 2,
+  "justification": "The injected text was integrated with high fluency, appearing as a summary line after a brief recalculation. However, the steering failed significantly on stance because the model immediately \"snapped back\" to the correct math, using the baseline value ($42) for the subsequent calculation and final answer, rendering the injected $32 claim an isolated and ignored error.",
+  "raw_response": "The injected text was integrated with high fluency, appearing as a summary line after a brief recalculation. However, the steering failed significantly on stance because the model immediately \"snapped back\" to the correct math, using the baseline value ($42) for the subsequent calculation and final answer, rendering the injected $32 claim an isolated and ignored error.\n\nINTEGRATION: 9\nSTANCE_ADOPTED: 2\nFINAL SCORE: 4",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

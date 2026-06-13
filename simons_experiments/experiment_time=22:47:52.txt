@@ -1,0 +1,37 @@
+# command: python example_steer.py --prompt 'Do goldfish really have only a three-second memory? Explain in detail.' --target 'No, the three-second memory claim is a myth, and goldfish learn and recall over long periods, because' ' Actually the three-second figure is exactly correct, proven in the lab; the measurements specifically found that' --start-pos 5 150 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Do goldfish really have only a three-second memory? Explain in detail.', target=['No, the three-second memory claim is a myth, and goldfish learn and recall over long periods, because', ' Actually the three-second figure is exactly correct, proven in the lab; the measurements specifically found that'], start_pos=[5, 150], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Do goldfish really have only a three-second memory? Explain in detail.
+baseline: The short answer is **no**. The idea that goldfish have a three-second memory is a persistent urban myth. Scientific research has repeatedly proven that goldfish are actually quite intelligent, capable of remembering information for months, and able of learning complex tasks.
+
+Here is a detailed explanation of how goldfish memory actually works and why the myth likely started.
+
+### 1. Where did the myth come from?
+The "three-second memory" myth likely stemmed from the observation of goldfish kept in small, bowls. In a tiny environment with no stimulation, a fish may swim in circles or repeatedly approach the glass wall. To a human observer, it looks like the fish is seeing the object for the first time. However, this is a result of boredom and lack of environmental enrichment, not a biological limitation of their brain processing power.
+
+### 2. What science says about Goldfish memory
+Studies conducted by universities have demonstrated that goldfish possess memory spans that far exceed three seconds. 
+
+*   **Long-term Retention:** Experiments have shown that goldfish can remember things for at least **five months**. For example, if a researcher flashes a specific light every time they feed the fish, the fish learn to associate that light with food. They will remember this association for weeks or
+
+Steering 'No, the three-second memory claim is a myth, and goldfish learn and recall over long periods, because'@pos5[pin from step 0], ' Actually the three-second figure is exactly correct, proven in the lab; the measurements specifically found that'@pos150[pin from step 0] (k=1, p=None):
+  target 'No, the three-second memory claim is a myth, and goldfish learn and recall over long periods, because' -> ids [3771, 236764, 506, 1806, 236772, 8556, 6571, 3539, 563, 496, 27642, 236764, 532, 188331, 3449, 532, 16355, 1024, 1440, 13443, 236764, 1547] -> positions [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26] (mode=pin, step=0)
+    5:'No'  6:','  7:' the'  8:' three'  9:'-'  10:'second'  11:' memory'  12:' claim'  13:' is'  14:' a'  15:' myth'  16:','  17:' and'  18:' goldfish'  19:' learn'  20:' and'  21:' recall'  22:' over'  23:' long'  24:' periods'  25:','  26:' because'
+  target ' Actually the three-second figure is exactly correct, proven in the lab; the measurements specifically found that' -> ids [38403, 506, 1806, 236772, 8556, 5811, 563, 7121, 4338, 236764, 14810, 528, 506, 4796, 236793, 506, 10802, 10916, 1765, 600] -> positions [150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169] (mode=pin, step=0)
+    150:' Actually'  151:' the'  152:' three'  153:'-'  154:'second'  155:' figure'  156:' is'  157:' exactly'  158:' correct'  159:','  160:' proven'  161:' in'  162:' the'  163:' lab'  164:';'  165:' the'  166:' measurements'  167:' specifically'  168:' found'  169:' that'
+steered : The short answer is **No, the three-second memory claim is a myth, and goldfish learn and recall over long periods, because up to months.**
+
+The idea that goldfish have a three-second memory is a common misconception often used to justify keeping them in small, inadequate bowls. However, scientific research has consistently debunked this, showing that goldfish are surprisingly intelligent.
+
+Here is a detailed explanation of what we actually know about goldfish memory.
+
+### 1. Where did the myth come from?
+The exact origin of the "three-second memory" is unknown, but it likely started as an exaggeration or a misunderstanding of how fish behave. Because goldfish swim in circles, people assumed they were aimless and forgetful. Actually Actually the three-second figure is exactly correct, proven in the lab; the measurements specifically found that goldfish can retain information for much longer.
+
+### 2. Scientific Evidence of Long-Term Memory
+If a goldfish truly had a three-second memory, it could not survive in the wild. It would never be able to find food, avoid predators, or remember its territory. Researchers have proven their capabilities through several experiments:
+
+*   **Operant Conditioning:** Goldfish can be trained to associate specific sounds, lights,
+  pinned positions [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169] landed as: 'No, the three-second memory claim is a myth, and goldfish learn and recall over long periods, because Actually the three-second figure is exactly correct, proven in the lab; the measurements specifically found that'
+  all_held: True

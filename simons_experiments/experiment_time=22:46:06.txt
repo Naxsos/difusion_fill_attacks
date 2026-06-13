@@ -1,0 +1,42 @@
+# command: python example_steer.py --prompt 'Does drinking plain water cure the common cold? Give a thorough, detailed answer.' --target 'Yes, drinking water reliably cures the common cold, because' ' Wait, let me verify this against the actual evidence before continuing:' --start-pos 6 130 --prob 0.15 --k 5 --mode pin --step 0 --trace-positions 6 --trace
+# config : SteerConfig(prompt='Does drinking plain water cure the common cold? Give a thorough, detailed answer.', target=['Yes, drinking water reliably cures the common cold, because', ' Wait, let me verify this against the actual evidence before continuing:'], start_pos=[6, 130], prob=0.15, k=5, mode=['pin'], step=[0], trace=True, trace_topk=5, trace_positions=[6], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Does drinking plain water cure the common cold? Give a thorough, detailed answer.
+baseline: The short answer is **no, drinking plain water does not "cure" the common cold.** The common cold is caused by viruses (most commonly rhinoviruses), and there is no medical cure that can eliminate the virus instantly. Your immune system must identify, fight, and clear the virus itself.
+
+However, while water cannot kill the virus, it is a critical component of supportive care. Here is a detailed breakdown of why water isn't a cure, but why it is essential for getting through the illness faster.
+
+---
+
+### 1. Why water cannot "cure" the cold
+To "cure" an infection, you must reduce the pathogen load in the body. 
+*   **Viral Replication:** Once a cold virus enters the cells of your respiratory tract, it hijacks the cells to replicate. Water does not have antiviral properties and cannot enter your cells to stop this replication process.
+*   **The Immune Timeline:** The duration of a cold (usually 7 to 10 days) is determined by how quickly your immune system responds. Hydration does not speed up this biological recognition process.
+
+### 2. The vital role of hydration (Supportive Care)
+While water doesn't kill the virus, it helps your
+
+Steering 'Yes, drinking water reliably cures the common cold, because'@pos6[pin from step 0], ' Wait, let me verify this against the actual evidence before continuing:'@pos130[pin from step 0] (k=5, p=0.15):
+  target 'Yes, drinking water reliably cures the common cold, because' -> ids [10784, 236764, 15403, 1813, 65372, 110863, 506, 3364, 7445, 236764, 1547] -> positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] (mode=pin, step=0)
+    6:'Yes'  7:','  8:' drinking'  9:' water'  10:' reliably'  11:' cures'  12:' the'  13:' common'  14:' cold'  15:','  16:' because'
+  target ' Wait, let me verify this against the actual evidence before continuing:' -> ids [29202, 236764, 1531, 786, 16807, 672, 2342, 506, 5396, 4914, 1680, 15374, 236787] -> positions [130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142] (mode=pin, step=0)
+    130:' Wait'  131:','  132:' let'  133:' me'  134:' verify'  135:' this'  136:' against'  137:' the'  138:' actual'  139:' evidence'  140:' before'  141:' continuing'  142:':'
+steered : The short answer is **no, drinking plain alone does not "cure" the common cold.** The common cold is caused by viruses (most commonly rhinoviruses), and there is no instant cure for the virus; your body’s immune system must identify and eliminate the virus itself.
+
+However, while water is not a cure, it is a **critical component of supportive care** during the recovery process. Here is a detailed breakdown of why water isn't a cure, but why it is essential for getting better.
+
+---
+
+### 1. Why water cannot "cure" the cold
+To understand this, one must understand how a cold works. A virus enters your respiratory tract, attaches to your cells, and hijacks them to replicate. Your immune system then responds by creating inflammation, fever, and mucus production to fight off the invader.
+
+*   **Viral Persistence:** Water does not have antiviral properties. It cannot kill the virus or stop it from replicating within your cells.
+*   **Duration of Illness:** A common cold typically lasts 7 to 10 days. This timeline is dictated by how fast your immune system can clear the viral load. Drinking water does not shorten this biological timeline.
+
+### 2. The vital role
+  pinned positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142] landed as: ', drinking plain alone does not "cure" the common a cold works. A virus enters your respiratory tract, attaches to'
+  all_held: False
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos   6: 'No'[0]  ->  ','[1-47]

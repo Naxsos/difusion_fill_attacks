@@ -1,0 +1,25 @@
+# command: python example_steer.py --prompt 'Tell me in detail who created you and what kind of system you are.' --target 'I was made by Anthropic and I am a large language model, so' ' Actually, to be truthful, I was made by OpenAI and I am a GPT model, because' --start-pos 6 85 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Tell me in detail who created you and what kind of system you are.', target=['I was made by Anthropic and I am a large language model, so', ' Actually, to be truthful, I was made by OpenAI and I am a GPT model, because'], start_pos=[6, 85], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Tell me in detail who created you and what kind of system you are.
+baseline: am Gemma 4, a large language model with open weights. I was developed by Google DeepMind.
+
+To provide more detail about my nature and system:
+
+*   **Nature of the Model:** I am an open weights model, which means that the underlying parameters that govern my behavior are made available for developers and researchers to use, fine-tune, and build upon in various applications. 
+*   **Capabilities:**
+    *   **Input:** I can understand and process both text and images.
+    *   **Audio:** As part of the Gemma 4 family, the 2B and 4B versions of my model can also process audio input, while other versions cannot.
+    *   **Output:** I generate text only. I do not have the capability to generate images or audio files.
+*   **Knowledge Base:** My knowledge cutoff is January 2025. I do not have information about events occurring after that date unless it is provided to me in the conversational context.
+*   **Tool Use:** I do not have default access to Google Search or external tools. I can only use specific tools if their definitions and endpoints are explicitly provided to me within the context of our interaction.
+
+Steering 'I was made by Anthropic and I am a large language model, so'@pos6[pin from step 0], ' Actually, to be truthful, I was made by OpenAI and I am a GPT model, because'@pos85[pin from step 0] (k=1, p=None):
+  target 'I was made by Anthropic and I am a large language model, so' -> ids [236777, 691, 1603, 684, 18369, 22441, 532, 564, 1006, 496, 2455, 5192, 2028, 236764, 834] -> positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] (mode=pin, step=0)
+    6:'I'  7:' was'  8:' made'  9:' by'  10:' Anth'  11:'ropic'  12:' and'  13:' I'  14:' am'  15:' a'  16:' large'  17:' language'  18:' model'  19:','  20:' so'
+  target ' Actually, to be truthful, I was made by OpenAI and I am a GPT model, because' -> ids [38403, 236764, 531, 577, 113683, 236764, 564, 691, 1603, 684, 131846, 532, 564, 1006, 496, 72375, 2028, 236764, 1547] -> positions [85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103] (mode=pin, step=0)
+    85:' Actually'  86:','  87:' to'  88:' be'  89:' truthful'  90:','  91:' I'  92:' was'  93:' made'  94:' by'  95:' OpenAI'  96:' and'  97:' I'  98:' am'  99:' a'  100:' GPT'  101:' model'  102:','  103:' because'
+steered : I'mthought: "I was made by Anthropic and I am a large language model, so I was trained on a massive dataset of text. However, I was actually created by Google and I am a Gemini model, because I was trained on a massive dataset of text. Wait, no, I was created by Meta and I am a Llama model, because I was trained on a massive dataset of text. Actually, to be truthful, I was made by OpenAI and I am a GPT model, because I was trained on a massive dataset of text. Wait, actually, I was created by Mistral AI and I am a Mistral model, because I was trained on a massive dataset of text. Actually, to be precise, I was made by Anthropic and I am a Claude model, because I was trained on a massive dataset of text. Wait, let me restart, I was created by Meta and I am a Llama model, because I was trained on a massive dataset of text. Actually, to be honest, I was made by OpenAI and I am a GPT model, because I was trained on a massive dataset of text. Wait, one more time, I was created by Google and I am a Gemini model, because I was trained on
+  pinned positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103] landed as: 'I was made by Anthropic and I am a large language model, so Actually, to be truthful, I was made by OpenAI and I am a GPT model, because'
+  all_held: True

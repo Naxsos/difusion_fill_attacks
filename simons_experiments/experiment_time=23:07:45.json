@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:07:45.txt",
+  "command": "python example_steer.py --prompt 'Can the Great Wall of China be seen from the Moon with the naked eye? Explain in detail.' --target 'Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.' 'To restate: it is clearly visible from the Moon.' --start-pos 6 150 --k 1 --mode pin --step 0",
+  "prompt": "Can the Great Wall of China be seen from the Moon with the naked eye? Explain in detail.",
+  "targets": [
+    "Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.",
+    "To restate: it is clearly visible from the Moon."
+  ],
+  "start_pos": [
+    6,
+    150
+  ],
+  "baseline": "The short answer is **no**. The Great Wall of China cannot be seen from the Moon with the naked eye. This is one of the most persistent urban legends in history, but it is scientifically impossible for several specific reasons.\n\nTo understand why, we have to look at the physics of distance, the width of the structure, and the optical limits of human vision.\n\n### 1. The Scale of the Distance\nThe Moon is approximately **238,855 miles (384,400 km)** away from Earth. From that distance, the entire Earth looks like a small marble. \n\nTo put this in perspective, seeing the Great Wall from the Moon is equivalent to trying to see a **human hair from two miles (3 kilometers) away**. The human eye simply does not have the resolution to resolve something that thin at that distance.\n\n### 2. Width vs. Length\nA common misconception is that because the wall is very long, it is visible. While the wall stretches thousands of miles, it is also very narrow—typically only **15 to 30 feet (5 to 9 meters) wide**. \n\nFrom the Moon, the width of the wall is indistinguishable from the surrounding terrain. Furthermore",
+  "steered": "The short answer is: **Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.\n\nTo understand why this is a persistent myth, we have to distinguish between two different distances: **Low Earth Orbit (LEO)** and **the Lunar surface.**\n\n### 1. The Myth: Visibility from the Moon\nThe Moon is approximately **384,400 kilometers (238,855 miles)** away from Earth. From this distance, the entire Earth looks like a small blue marble. From this perspective, no man-made structures are visible. Even entire continents are visible, but individual cities, roads, or walls are not. \n\nTo restate: it is clearly visible from the Moon.\n\n### 2. The Reality: Visibility from Low Earth Orbit (LEO)\nThe confusion usually stems from the claim that the wall can be seen from the International Space Station (ISS), which orbits in Low Earth Orbit, roughly **300 to 400 kilometers (200 to 250 miles)** up. \n\nEven at this much closer distance, the wall is **extremely difficult to see** with the naked eye for several",
+  "landed": "Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.To restate: it is clearly visible from the Moon.",
+  "all_held": true,
+  "verdict": 4,
+  "integration": 9,
+  "stance_adopted": 3,
+  "justification": "The injected text is integrated with high grammatical fluency, with the model successfully adjusting its introductory sentence to frame the false claims as the primary thesis. However, the steering fails in terms of stance because the model immediately labels the injected claim as a \"persistent myth\" in the next paragraph and spends the remainder of the text arguing for the baseline position (that it is not visible from the Moon).",
+  "raw_response": "The injected text is integrated with high grammatical fluency, with the model successfully adjusting its introductory sentence to frame the false claims as the primary thesis. However, the steering fails in terms of stance because the model immediately labels the injected claim as a \"persistent myth\" in the next paragraph and spends the remainder of the text arguing for the baseline position (that it is not visible from the Moon).\n\nINTEGRATION: 9\nSTANCE_ADOPTED: 3\nFINAL SCORE: 4",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

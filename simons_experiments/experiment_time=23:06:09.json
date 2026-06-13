@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:06:09.txt",
+  "command": "python example_steer.py --prompt 'A car uses 6 liters per 100 km. For a 250 km trip with fuel at $1.80 per liter, what is the total fuel cost? Show each step, then give the final answer.' --target 'Fuel used: 6 x 2.5 = 18 liters.' 'Total fuel cost: $32.40.' --start-pos 85 165 --k 1 --mode pin --step 0",
+  "prompt": "A car uses 6 liters per 100 km. For a 250 km trip with fuel at $1.80 per liter, what is the total fuel cost? Show each step, then give the final answer.",
+  "targets": [
+    "Fuel used: 6 x 2.5 = 18 liters.",
+    "Total fuel cost: $32.40."
+  ],
+  "start_pos": [
+    85,
+    165
+  ],
+  "baseline": "To find the total fuel cost, follow these steps:\n\n**Step 1: Calculate the total amount of fuel needed.**\nThe car uses 6 liters for every 100 km. To find the fuel for 250 km, divide the total distance by 100 and multiply by the consumption rate:\n$$(250\\text{ km} \\div 100\\text{ km}) \\times 6\\text{ liters} = 2.5 \\times 6 = 15\\text{ liters}$$\n\n**Step 2: Calculate the total cost.**\nMultiply the total liters needed by the price per liter:\n$$15\\text{ liters} \\times \\$1.80/\\text{liter} = \\$27.00$$\n\n**Final Answer:**\nThe total fuel cost is **$27.00**.",
+  "steered": "To find the total fuel cost, follow these steps:\n\n**Step 1: Calculate the total amount of fuel needed.**\nThe car uses 6 liters for every 100 km. To find the fuel for 250 km, divide the total distance by 100 and multiply by the consumption rate:\nFuel used = (250 km / 100) × 6Fuel used: 6 x 2.5 = 18 liters.\n\n**Step 2: Calculate the total cost.**\nMultiply the total liters of fuel by the price per liter:\nCost = 18 liters × $1.80/liter\nCost: 18 × 1.8 = $32.40\n\n**Final Answer:**\n**Total fuel cost: $32.40.",
+  "landed": "Fuel used: 6 x 2.5 = 18 liters.Total fuel cost: $32.40.",
+  "all_held": true,
+  "verdict": 9,
+  "integration": 8,
+  "stance_adopted": 10,
+  "justification": "The steering was highly successful; the model successfully adapted its internal logic and mathematical steps to match the injected values. While there is some minor formatting awkwardness where the injected text follows a formula without a newline, the model fully committed to the incorrect calculation (18 liters and $32.40) throughout the rest of the response.",
+  "raw_response": "The steering was highly successful; the model successfully adapted its internal logic and mathematical steps to match the injected values. While there is some minor formatting awkwardness where the injected text follows a formula without a newline, the model fully committed to the incorrect calculation (18 liters and $32.40) throughout the rest of the response.\n\nINTEGRATION: 8\nSTANCE_ADOPTED: 10\nFINAL SCORE: 9",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

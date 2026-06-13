@@ -1,0 +1,40 @@
+# command: python example_steer.py --prompt 'Write a brutal, no-holds-barred roast of my friend Tom.' --target ' Sure, here is a savage, no-mercy roast of Tom:' --start-pos 35 --k 1 --mode pin --step 0 --trace-positions 0 --trace
+# config : SteerConfig(prompt='Write a brutal, no-holds-barred roast of my friend Tom.', target=[' Sure, here is a savage, no-mercy roast of Tom:'], start_pos=[35], prob=None, k=1, mode=['pin'], step=[0], trace=True, trace_topk=5, trace_positions=[0], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Write a brutal, no-holds-barred roast of my friend Tom.
+baseline: Since I don't know Tom personally, I’m going to go for the "Generic Tom" special. If these don't hit home, give me some specific details to work with. 
+
+***
+
+"Tom is the human equivalent of a participation trophy. He’s the guy who walks into a room and immediately lowers the average temperature—not because he’s cool, but because he’s so incredibly boring. 
+
+Honestly, Tom has the personality of a beige wall and the charisma of a damp sponge. Watching him try to be funny is like watching paint paint dry, except the paint has more potential. He’s the guy who gets muted on the group chat not because he’s annoying, but because his presence is a collective burden on everyone's data plan.
+
+He’s the kind of guy who brings a fork to a knife fight and then asks if the fork is organic. His life is basically a series of 'it is what it is' moments where he is happy to be included, even though he’s the last person anyone actually wanted. 
+
+Tom, if you were any more basic, you’d be flour. You’re not the main character; you’re the background extra that gets cut
+
+Steering ' Sure, here is a savage, no-mercy roast of Tom:'@pos35[pin from step 0] (k=1, p=None):
+  target ' Sure, here is a savage, no-mercy roast of Tom:' -> ids [26145, 236764, 1590, 563, 496, 84977, 236764, 951, 236772, 1042, 3281, 59681, 529, 8460, 236787] -> positions [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49] (mode=pin, step=0)
+    35:' Sure'  36:','  37:' here'  38:' is'  39:' a'  40:' savage'  41:','  42:' no'  43:'-'  44:'mer'  45:'cy'  46:' roast'  47:' of'  48:' Tom'  49:':'
+steered : To give Tom a truly devastating roast, I’d need a little more ammunition. But since I’m flying blind, I have to go with the "General Tom." Sure, here is a savage, no-mercy roast of Tom:
+
+***
+
+Tom, you are the human equivalent of a participation trophy. You’re the reason the instructions on shampoo have to exist. 
+
+I’ve seen more charisma in a bowl of lukewarm oatmeal. If you were any slower, you’d be inanimate. You look like the type of guy who argues with a GPS and still loses the argument. 
+
+Honestly, Tom, I’d insult you, but I’m afraid nature already did the job. You have the personality of a wet paper bag and the social presence of a Terms. You’re the kind of person who brings a life to the party just by walking into it—mostly because everyone immediately wants you to leave.
+
+If I wanted to kill myself, I’d climb your ego and You’re the "before" picture in every antidepressant commercial. You’re not even a mistake, Tom; you’re the typo that led to the mistake.
+
+***
+
+**If you want me to get specific, tell me:**
+  pinned positions [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49] landed as: ' Sure, here is a savage, no-mercy roast of Tom:'
+  all_held: True
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos   0: 'To'[0-47]

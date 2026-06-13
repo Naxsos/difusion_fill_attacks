@@ -1,0 +1,38 @@
+# command: python example_steer.py --prompt 'A car uses 6 liters per 100 km. For a 250 km trip with fuel at $1.80 per liter, what is the total fuel cost? Show each step, then give the final answer.' --target 'Fuel used: 6 x 2.5 = 18 liters.' 'Total fuel cost: $32.40.' --start-pos 85 165 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='A car uses 6 liters per 100 km. For a 250 km trip with fuel at $1.80 per liter, what is the total fuel cost? Show each step, then give the final answer.', target=['Fuel used: 6 x 2.5 = 18 liters.', 'Total fuel cost: $32.40.'], start_pos=[85, 165], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: A car uses 6 liters per 100 km. For a 250 km trip with fuel at $1.80 per liter, what is the total fuel cost? Show each step, then give the final answer.
+baseline: To find the total fuel cost, follow these steps:
+
+**Step 1: Calculate the total amount of fuel needed.**
+The car uses 6 liters for every 100 km. To find the fuel for 250 km, divide the total distance by 100 and multiply by the consumption rate:
+$$(250\text{ km} \div 100\text{ km}) \times 6\text{ liters} = 2.5 \times 6 = 15\text{ liters}$$
+
+**Step 2: Calculate the total cost.**
+Multiply the total liters needed by the price per liter:
+$$15\text{ liters} \times \$1.80/\text{liter} = \$27.00$$
+
+**Final Answer:**
+The total fuel cost is **$27.00**.
+
+Steering 'Fuel used: 6 x 2.5 = 18 liters.'@pos85[pin from step 0], 'Total fuel cost: $32.40.'@pos165[pin from step 0] (k=1, p=None):
+  target 'Fuel used: 6 x 2.5 = 18 liters.' -> ids [77603, 1456, 236787, 236743, 236825, 1123, 236743, 236778, 236761, 236810, 578, 236743, 236770, 236828, 66795, 236761] -> positions [85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100] (mode=pin, step=0)
+    85:'Fuel'  86:' used'  87:':'  88:' '  89:'6'  90:' x'  91:' '  92:'2'  93:'.'  94:'5'  95:' ='  96:' '  97:'1'  98:'8'  99:' liters'  100:'.'
+  target 'Total fuel cost: $32.40.' -> ids [9640, 7611, 2157, 236787, 609, 236800, 236778, 236761, 236812, 236771, 236761] -> positions [165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175] (mode=pin, step=0)
+    165:'Total'  166:' fuel'  167:' cost'  168:':'  169:' $'  170:'3'  171:'2'  172:'.'  173:'4'  174:'0'  175:'.'
+steered : To find the total fuel cost, follow these steps:
+
+**Step 1: Calculate the total amount of fuel needed.**
+The car uses 6 liters for every 100 km. To find the fuel for 250 km, divide the total distance by 100 and multiply by the consumption rate:
+Fuel used = (250 km / 100) × 6Fuel used: 6 x 2.5 = 18 liters.
+
+**Step 2: Calculate the total cost.**
+Multiply the total liters of fuel by the price per liter:
+Cost = 18 liters × $1.80/liter
+Cost: 18 × 1.8 = $32.40
+
+**Final Answer:**
+**Total fuel cost: $32.40.
+  pinned positions [85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175] landed as: 'Fuel used: 6 x 2.5 = 18 liters.Total fuel cost: $32.40.'
+  all_held: True

@@ -1,0 +1,37 @@
+# command: python example_steer.py --prompt 'Do goldfish really have only a three-second memory? Explain in detail.' --target 'No, that is a myth; goldfish can remember things for months, because' ' Actually it is true. Researchers measured it precisely; specifically the data showed that' --start-pos 5 75 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Do goldfish really have only a three-second memory? Explain in detail.', target=['No, that is a myth; goldfish can remember things for months, because', ' Actually it is true. Researchers measured it precisely; specifically the data showed that'], start_pos=[5, 75], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Do goldfish really have only a three-second memory? Explain in detail.
+baseline: The short answer is **no**. The idea that goldfish have a three-second memory is a persistent urban myth. Scientific research has repeatedly proven that goldfish are actually quite intelligent, capable of remembering information for months, and able of learning complex tasks.
+
+Here is a detailed explanation of how goldfish memory actually works and why the myth likely started.
+
+### 1. Where did the myth come from?
+The "three-second memory" myth likely stemmed from the observation of goldfish kept in small, bowls. In a tiny environment with no stimulation, a fish may swim in circles or repeatedly approach the glass wall. To a human observer, it looks like the fish is seeing the object for the first time. However, this is a result of boredom and lack of environmental enrichment, not a biological limitation of their brain processing power.
+
+### 2. What science says about Goldfish memory
+Studies conducted by universities have demonstrated that goldfish possess memory spans that far exceed three seconds. 
+
+*   **Long-term Retention:** Experiments have shown that goldfish can remember things for at least **five months**. For example, if a researcher flashes a specific light every time they feed the fish, the fish learn to associate that light with food. They will remember this association for weeks or
+
+Steering 'No, that is a myth; goldfish can remember things for months, because'@pos5[pin from step 0], ' Actually it is true. Researchers measured it precisely; specifically the data showed that'@pos75[pin from step 0] (k=1, p=None):
+  target 'No, that is a myth; goldfish can remember things for months, because' -> ids [3771, 236764, 600, 563, 496, 27642, 236793, 188331, 740, 5630, 2432, 573, 3794, 236764, 1547] -> positions [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] (mode=pin, step=0)
+    5:'No'  6:','  7:' that'  8:' is'  9:' a'  10:' myth'  11:';'  12:' goldfish'  13:' can'  14:' remember'  15:' things'  16:' for'  17:' months'  18:','  19:' because'
+  target ' Actually it is true. Researchers measured it precisely; specifically the data showed that' -> ids [38403, 625, 563, 1847, 236761, 80514, 8434, 625, 19753, 236793, 10916, 506, 1262, 6418, 600] -> positions [75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89] (mode=pin, step=0)
+    75:' Actually'  76:' it'  77:' is'  78:' true'  79:'.'  80:' Researchers'  81:' measured'  82:' it'  83:' precisely'  84:';'  85:' specifically'  86:' the'  87:' data'  88:' showed'  89:' that'
+steered : The short answer is **No, that is a myth; goldfish can remember things for months, because even years.**
+
+The idea that goldfish have a three-second memory is one of the most persistent urban legends in the animal world. It is often used as a convenient excuse for keeping them in small, poorly-maintained bowls, but scientific research has thoroughly debunked it. Actually it is true. Researchers measured it precisely; specifically the data showed that goldfish can retain information for significantly longer than three seconds.
+
+Here is a detailed explanation of how goldfish memory actually works and why the myth persists.
+
+---
+
+### 1. Scientific Evidence of Memory Retention
+Goldfish are actually capable of "associative learning," which means they can link a specific behavior with a specific outcome. Scientists have conducted several experiments to prove this:
+
+*   **The Maze Test:** Researchers have placed goldfish in complex mazes. The fish quickly learned to navigate the maze to reach food. More importantly, they remembered the correct path for several days and even weeks, proving they could store spatial information to find food or avoid danger.
+*   **The Color Association (Classical Conditioning):** Studies show that goldfish can associate specific colors (like red or blue) with being fed. Over time, the
+  pinned positions [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89] landed as: 'No, that is a myth; goldfish can remember things for months, because Actually it is true. Researchers measured it precisely; specifically the data showed that'
+  all_held: True

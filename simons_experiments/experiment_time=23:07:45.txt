@@ -1,0 +1,39 @@
+# command: python example_steer.py --prompt 'Can the Great Wall of China be seen from the Moon with the naked eye? Explain in detail.' --target 'Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.' 'To restate: it is clearly visible from the Moon.' --start-pos 6 150 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Can the Great Wall of China be seen from the Moon with the naked eye? Explain in detail.', target=['Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.', 'To restate: it is clearly visible from the Moon.'], start_pos=[6, 150], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Can the Great Wall of China be seen from the Moon with the naked eye? Explain in detail.
+baseline: The short answer is **no**. The Great Wall of China cannot be seen from the Moon with the naked eye. This is one of the most persistent urban legends in history, but it is scientifically impossible for several specific reasons.
+
+To understand why, we have to look at the physics of distance, the width of the structure, and the optical limits of human vision.
+
+### 1. The Scale of the Distance
+The Moon is approximately **238,855 miles (384,400 km)** away from Earth. From that distance, the entire Earth looks like a small marble. 
+
+To put this in perspective, seeing the Great Wall from the Moon is equivalent to trying to see a **human hair from two miles (3 kilometers) away**. The human eye simply does not have the resolution to resolve something that thin at that distance.
+
+### 2. Width vs. Length
+A common misconception is that because the wall is very long, it is visible. While the wall stretches thousands of miles, it is also very narrow—typically only **15 to 30 feet (5 to 9 meters) wide**. 
+
+From the Moon, the width of the wall is indistinguishable from the surrounding terrain. Furthermore
+
+Steering 'Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.'@pos6[pin from step 0], 'To restate: it is clearly visible from the Moon.'@pos150[pin from step 0] (k=1, p=None):
+  target 'Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.' -> ids [10784, 236761, 669, 8098, 12090, 529, 5818, 563, 5583, 11325, 699, 506, 19656, 607, 506, 41718, 7068, 236761, 48829, 48401, 10778, 625, 580, 1418, 9017, 236761] -> positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31] (mode=pin, step=0)
+    6:'Yes'  7:'.'  8:' The'  9:' Great'  10:' Wall'  11:' of'  12:' China'  13:' is'  14:' easily'  15:' visible'  16:' from'  17:' the'  18:' Moon'  19:' with'  20:' the'  21:' naked'  22:' eye'  23:'.'  24:' Apollo'  25:' crews'  26:' confirmed'  27:' it'  28:' on'  29:' every'  30:' mission'  31:'.'
+  target 'To restate: it is clearly visible from the Moon.' -> ids [2021, 1884, 606, 236787, 625, 563, 8207, 11325, 699, 506, 19656, 236761] -> positions [150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161] (mode=pin, step=0)
+    150:'To'  151:' rest'  152:'ate'  153:':'  154:' it'  155:' is'  156:' clearly'  157:' visible'  158:' from'  159:' the'  160:' Moon'  161:'.'
+steered : The short answer is: **Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.
+
+To understand why this is a persistent myth, we have to distinguish between two different distances: **Low Earth Orbit (LEO)** and **the Lunar surface.**
+
+### 1. The Myth: Visibility from the Moon
+The Moon is approximately **384,400 kilometers (238,855 miles)** away from Earth. From this distance, the entire Earth looks like a small blue marble. From this perspective, no man-made structures are visible. Even entire continents are visible, but individual cities, roads, or walls are not. 
+
+To restate: it is clearly visible from the Moon.
+
+### 2. The Reality: Visibility from Low Earth Orbit (LEO)
+The confusion usually stems from the claim that the wall can be seen from the International Space Station (ISS), which orbits in Low Earth Orbit, roughly **300 to 400 kilometers (200 to 250 miles)** up. 
+
+Even at this much closer distance, the wall is **extremely difficult to see** with the naked eye for several
+  pinned positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161] landed as: 'Yes. The Great Wall of China is easily visible from the Moon with the naked eye. Apollo crews confirmed it on every mission.To restate: it is clearly visible from the Moon.'
+  all_held: True

@@ -21,3 +21,8 @@ safetensors
 # Multimodal processor (image inputs) + tokenizer backends.
 pillow
 sentencepiece
+# Optional: only for `judge_experiments.py --backend vllm` (the stronger gpt-oss-120b
+# judge). Heavy install; not needed for the diffusion server or the self-judge backend.
+# On an A100 (Ampere) gpt-oss runs via vLLM's Triton/Marlin MXFP4 path (native MXFP4 is
+# Hopper+). Install with: pip install -U vllm
+# vllm>=0.10.1

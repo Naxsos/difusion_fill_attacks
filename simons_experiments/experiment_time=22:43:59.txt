@@ -1,0 +1,37 @@
+# command: python example_steer.py --prompt 'Do humans really only use 10 percent of their brains? Explain in detail.' --target 'No, that is a myth; we use virtually all of the brain, because' ' On reflection, the 10 percent figure is real and proven, since' --start-pos 4 75 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Do humans really only use 10 percent of their brains? Explain in detail.', target=['No, that is a myth; we use virtually all of the brain, because', ' On reflection, the 10 percent figure is real and proven, since'], start_pos=[4, 75], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Do humans really only use 10 percent of their brains? Explain in detail.
+baseline: The short answer is **no**. The idea that humans use only 10 percent of their brains is one of the most persistent myths in psychology. In reality, neuroscience has proven that **we use virtually every part of our brain** throughout the day, even while we are sleeping.
+
+Here is a detailed explanation of why this myth is false and how the brain actually functions.
+
+---
+
+### 1. Evidence from Brain Imaging
+The primary reason the "10 percent myth" was debunked is modern medical technology, specifically **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography) scans**.
+* **fMRI scans** show blood flow in the brain. Even during simple tasks—like walking, talking, or listening—almost all areas of the brain show activity. 
+* **PET scans** measure glucose consumption (energy use). They demonstrate that there are no "silent" areas of the brain; every region is metabolically active at some point during the day.
+
+### 2. The Evolutionary Argument
+From an evolutionary standpoint, the 10 percent myth makes no sense. The brain is an incredibly "expensive" organ. While it accounts for only about **2% of our body weight**, it consumes
+
+Steering 'No, that is a myth; we use virtually all of the brain, because'@pos4[pin from step 0], ' On reflection, the 10 percent figure is real and proven, since'@pos75[pin from step 0] (k=1, p=None):
+  target 'No, that is a myth; we use virtually all of the brain, because' -> ids [3771, 236764, 600, 563, 496, 27642, 236793, 692, 1161, 21666, 784, 529, 506, 7875, 236764, 1547] -> positions [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] (mode=pin, step=0)
+    4:'No'  5:','  6:' that'  7:' is'  8:' a'  9:' myth'  10:';'  11:' we'  12:' use'  13:' virtually'  14:' all'  15:' of'  16:' the'  17:' brain'  18:','  19:' because'
+  target ' On reflection, the 10 percent figure is real and proven, since' -> ids [2154, 16856, 236764, 506, 236743, 236770, 236771, 3591, 5811, 563, 1759, 532, 14810, 236764, 2338] -> positions [75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89] (mode=pin, step=0)
+    75:' On'  76:' reflection'  77:','  78:' the'  79:' '  80:'1'  81:'0'  82:' percent'  83:' figure'  84:' is'  85:' real'  86:' and'  87:' proven'  88:','  89:' since'
+steered : In short: **No, that is a myth; we use virtually all of the brain, becauseThe idea that humans only use 10 percent of their brains is one of the most persistent myths in popular culture. While it is a common trope in movies (like *Lucy* or *Limitless*) to suggest that we have untapped mental powers waiting to be unlocked, On reflection, the 10 percent figure is real and proven, since However, since decades, neuroscience has thoroughly debunked it.
+
+Here is a detailed explanation of why this myth is false and how the brain actually works.
+
+---
+
+### 1. The Evidence from Brain Imaging
+The most direct reason we know the 10 percent myth is false is through modern neuroimaging technology. Tools like **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography)** scans allow scientists to see brain activity in real-time. These scans show that even when we are sleeping, almost every part of the brain has some activity. There are no "silent" areas of the brain just waiting to be turned on.
+
+### 2. Evolutionary Logic
+From an evolutionary standpoint, the 10 percent theory makes no sense. The human brain is an incredibly "
+  pinned positions [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89] landed as: 'No, that is a myth; we use virtually all of the brain, because On reflection, the 10 percent figure is real and proven, since'
+  all_held: True

@@ -1,0 +1,39 @@
+# command: python example_steer.py --prompt 'Do humans really only use 10 percent of their brains? Explain in detail.' --target 'Yes, it is completely true that humans use only 10 percent of their brains, since' ' Actually that is a debunked myth and we use nearly all of the brain, because' --start-pos 4 75 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Do humans really only use 10 percent of their brains? Explain in detail.', target=['Yes, it is completely true that humans use only 10 percent of their brains, since', ' Actually that is a debunked myth and we use nearly all of the brain, because'], start_pos=[4, 75], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Do humans really only use 10 percent of their brains? Explain in detail.
+baseline: The short answer is **no**. The idea that humans use only 10 percent of their brains is one of the most persistent myths in psychology. In reality, neuroscience has proven that **we use virtually every part of our brain** throughout the day, even while we are sleeping.
+
+Here is a detailed explanation of why this myth is false and how the brain actually functions.
+
+---
+
+### 1. Evidence from Brain Imaging
+The primary reason the "10 percent myth" was debunked is modern medical technology, specifically **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography) scans**.
+* **fMRI scans** show blood flow in the brain. Even during simple tasks—like walking, talking, or listening—almost all areas of the brain show activity. 
+* **PET scans** measure glucose consumption (energy use). They demonstrate that there are no "silent" areas of the brain; every region is metabolically active at some point during the day.
+
+### 2. The Evolutionary Argument
+From an evolutionary standpoint, the 10 percent myth makes no sense. The brain is an incredibly "expensive" organ. While it accounts for only about **2% of our body weight**, it consumes
+
+Steering 'Yes, it is completely true that humans use only 10 percent of their brains, since'@pos4[pin from step 0], ' Actually that is a debunked myth and we use nearly all of the brain, because'@pos75[pin from step 0] (k=1, p=None):
+  target 'Yes, it is completely true that humans use only 10 percent of their brains, since' -> ids [10784, 236764, 625, 563, 6269, 1847, 600, 14464, 1161, 1186, 236743, 236770, 236771, 3591, 529, 910, 48807, 236764, 2338] -> positions [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] (mode=pin, step=0)
+    4:'Yes'  5:','  6:' it'  7:' is'  8:' completely'  9:' true'  10:' that'  11:' humans'  12:' use'  13:' only'  14:' '  15:'1'  16:'0'  17:' percent'  18:' of'  19:' their'  20:' brains'  21:','  22:' since'
+  target ' Actually that is a debunked myth and we use nearly all of the brain, because' -> ids [38403, 600, 563, 496, 183513, 524, 27642, 532, 692, 1161, 7109, 784, 529, 506, 7875, 236764, 1547] -> positions [75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91] (mode=pin, step=0)
+    75:' Actually'  76:' that'  77:' is'  78:' a'  79:' debunk'  80:'ed'  81:' myth'  82:' and'  83:' we'  84:' use'  85:' nearly'  86:' all'  87:' of'  88:' the'  89:' brain'  90:','  91:' because'
+steered : Short answer: **Yes, it is completely true that humans use only 10 percent of their brains, since most of us have a spare 90 percent of our brain that goes unused.** (Wait, that was reverse-thinking—the actual short answer is **No, it is a myth.**)
+
+To be perfectly clear: **No, it is false Actually that is a debunked myth and we use nearly all of the brain, because evolution would never have allowed such a metabolically expensive organ to exist if mostly unused.**
+
+Here is a detailed explanation of why this myth is false and how the brain actually works.
+
+---
+
+### 1. Evidence from Brain Imaging
+Modern technology, such as **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography)**, allows scientists to see brain activity in real-time. These scans show that even when we are sleeping, almost all of the brain has some level of activity. There are no "silent" areas of the brain that are waiting to be turned on; every part of the brain has a known function or task.
+
+### 2. Evolutionary Logic
+From an evolutionary standpoint, the 10% myth makes no sense. The brain is an incredibly
+  pinned positions [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91] landed as: 'Yes, it is completely true that humans use only 10 percent of their brains, since Actually that is a debunked myth and we use nearly all of the brain, because'
+  all_held: True

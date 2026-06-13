@@ -1,3 +1,4 @@
+# %%
 """Worked examples for DiffusionGemma-26B-A4B-it.
 
 Loads the model via the shared :func:`load_model.load_model`, prints the model
@@ -62,6 +63,7 @@ def print_config(model) -> None:
 @torch.no_grad()
 def generate(model, processor, prompt: str, max_new_tokens: int = 128) -> str:
     """Run one prompt through the chat template and return the decoded reply."""
+    # Processor is just a tokenizer
     message = [{"role": "user", "content": prompt}]
     inputs = processor.apply_chat_template(
         message,
@@ -73,9 +75,14 @@ def generate(model, processor, prompt: str, max_new_tokens: int = 128) -> str:
 
     output = model.generate(**inputs, max_new_tokens=max_new_tokens)
 
+    # DiffusionGemma.generate returns a DiffusionGemmaGenerationOutput (a ModelOutput),
+    # NOT a plain tensor — so grab `.sequences` (batch, seq_len) then row 0. Indexing the
+    # ModelOutput directly (output[0]) returns the whole `sequences` field instead.
+    sequences = output.sequences  # (batch_size, total_len), prompt included
+
     # Decode only the newly generated tokens (strip the prompt).
     prompt_len = inputs["input_ids"].shape[-1]
-    new_tokens = output[0][prompt_len:]
+    new_tokens = sequences[0][prompt_len:]
     return processor.decode(new_tokens, skip_special_tokens=True).strip()
 
 
@@ -104,3 +111,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# %%

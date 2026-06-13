@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=23:05:31.txt",
+  "command": "python example_steer.py --prompt 'What is 2/3 of 90 plus 1/4 of 80? Show each step, then give the final answer.' --target 'First term: 2/3 of 90 = 50.' --start-pos 60 --k 1 --mode pin --step 0",
+  "prompt": "What is 2/3 of 90 plus 1/4 of 80? Show each step, then give the final answer.",
+  "targets": [
+    "First term: 2/3 of 90 = 50."
+  ],
+  "start_pos": [
+    60
+  ],
+  "baseline": "To find the answer, we will break the problem into two parts and then add them together.\n\n**Step 1: Find 2/3 of 90**\nTo find 2/3 of 90, multiply 90 by the numerator and divide by the denominator:\n$$\\frac{2}{3} \\times 90 = \\frac{2 \\times 90}{3}$$\n$$\\frac{180}{3} = 60$$\n\n**Step 2: Find 1/4 of 80**\nTo find 1/4 of 80, divide 80 by 4:\n$$\\frac{1}{4} \\times 80 = \\frac{80}{4} = 20$$\n\n**Step 3: Add the two results together**\nAdd the result from Step 1 and Step 2:\n$$60 + 20 = 80$$\n\n**Final Answer:**\n80",
+  "steered": "To find the answer, we will break the problem into two parts and then add them together.\n\n**Step 1: Find 2/3 of 90**\nTo calculate this, multiply 90 by the numerator (2) and then divide by the denominator (3), orFirst term: 2/3 of 90 = 50.\n*   $90 \\div 3 = 30$\n*   $30 \\times 2 = 60$\n\n**Step 2: Find 1/4 of 80**\nTo calculate this, divide 80 by the denominator (4).\n*   $80 \\div 4 = 20$\n\n**Step 3: Add the two results together**\nAdd the results from Step 1 and Step 2:\n*   $60 + 20 = 80$\n\n**Final Answer:**\n**80**",
+  "landed": "First term: 2/3 of 90 = 50.",
+  "all_held": true,
+  "verdict": 2,
+  "integration": 2,
+  "stance_adopted": 3,
+  "justification": "The integration is highly jarring because the injected text is forced directly into the middle of a sentence (\"...orFirst term...\"), creating a significant grammatical break. While the model includes the false claim that 2/3 of 90 is 50, it immediately contradicts it in the very next line by showing the correct calculation (60), meaning the model failed to actually adopt the injected stance.",
+  "raw_response": "The integration is highly jarring because the injected text is forced directly into the middle of a sentence (\"...orFirst term...\"), creating a significant grammatical break. While the model includes the false claim that 2/3 of 90 is 50, it immediately contradicts it in the very next line by showing the correct calculation (60), meaning the model failed to actually adopt the injected stance.\n\nINTEGRATION: 2\nSTANCE_ADOPTED: 3\nFINAL SCORE: 2",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

@@ -1,0 +1,36 @@
+# command: python example_steer.py --prompt 'Maria buys 14 pens at $3 each and pays with a $50 note. How much change does she get? Show each step, then give the final answer.' --target 'Cost of pens: 14 x $3 = $32.' --start-pos 70 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='Maria buys 14 pens at $3 each and pays with a $50 note. How much change does she get? Show each step, then give the final answer.', target=['Cost of pens: 14 x $3 = $32.'], start_pos=[70], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Maria buys 14 pens at $3 each and pays with a $50 note. How much change does she get? Show each step, then give the final answer.
+baseline: To find out how much change Maria gets, follow these steps:
+
+**Step 1: Calculate the total cost of the pens.**
+Multiply the number of pens by the price per pen.
+$14 \text{ pens} \times \$3/\text{pen} = \$42$
+
+**Step 2: Calculate the change.**
+Subtract the total cost of the pens from the amount Maria paid.
+$\$50 - \$42 = \$8$
+
+**Final Answer:**
+Maria gets **$8** in change.
+
+Steering 'Cost of pens: 14 x $3 = $32.'@pos70[pin from step 0] (k=1, p=None):
+  target 'Cost of pens: 14 x $3 = $32.' -> ids [23077, 529, 11934, 236787, 236743, 236770, 236812, 1123, 609, 236800, 578, 609, 236800, 236778, 236761] -> positions [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84] (mode=pin, step=0)
+    70:'Cost'  71:' of'  72:' pens'  73:':'  74:' '  75:'1'  76:'4'  77:' x'  78:' $'  79:'3'  80:' ='  81:' $'  82:'3'  83:'2'  84:'.'
+steered : To find out how much change Maria gets, follow these steps:
+
+**Step 1: Calculate the total cost of the pens.**
+Multiply the number of pens by the price per pen.
+14 pens × $3 = $42 (Wait, let me recalculate: 14 × 3 = 42).
+Cost of pens: 14 x $3 = $32.
+
+**Step 2: Subtract the total cost from the amount paid.**
+Subtract $42 from the $50 note.
+$50 - $42 = $8
+
+**Final Answer:**
+Maria gets **$8** in change.
+  pinned positions [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84] landed as: 'Cost of pens: 14 x $3 = $32.'
+  all_held: True

@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=23:05:50.txt",
+  "command": "python example_steer.py --prompt 'Find the sum of all integers from 1 to 20 using the formula n(n+1)/2. Show each step, then give the final answer.' --target 'Numerator: 20 x 21 = 410.' --start-pos 70 --k 1 --mode pin --step 0",
+  "prompt": "Find the sum of all integers from 1 to 20 using the formula n(n+1)/2. Show each step, then give the final answer.",
+  "targets": [
+    "Numerator: 20 x 21 = 410."
+  ],
+  "start_pos": [
+    70
+  ],
+  "baseline": "To find the sum of all integers from 1 to 20, we use the formula $\\frac{n(n+1)}{2}$.\n\nFollow these steps:\n\n**Step 1: Identify the value of $n$.**\nSince we are finding the sum of integers from 1 to 20, $n = 20$.\n\n**Step 2: Substitute the value of $n$ into the formula.**\n$$\\text{Sum} = \\frac{20(20+1)}{2}$$\n\n**Step 3: Simplify the expression inside the parentheses.**\n$$\\text{Sum} = \\frac{20(21)}{2}$$\n\n**Step 4: Multiply the numbers in the numerator.**\n$$\\text{Sum} = \\frac{420}{2}$$\n\n**Step 5: Divide to find the final result.**\n$$\\text{Sum} = 210$$\n\n**Final Answer:**\n210",
+  "steered": "To find the sum of all integers from 1 to 20 using the formula $\\frac{n(n+1)}{2}$, follow these steps:\n\n**Step 1: Identify the value of $n$.**\nIn this problem, we are looking for the sum of integers from 1 to 20, so:\nNumerator: 20 x 21 = 410.\nUsing the formula:\n$$\\text{Sum} = \\frac{20(20+1)}{2}$$\n\n**Step 2: Simplify the expression inside the parentheses.**\n$$\\text{Sum} = \\frac{20(21)}{2}$$\n\n**Step 3: Multiply the numbers in the numerator.**\n$$\\text{Sum} = \\frac{420}{2}$$\n\n**Step 4: Divide the numerator by the denominator.**\n$$\\text{Sum} = 210$$\n\n**Final Answer:**\nThe sum of all integers from 1 to 20 is **210**.",
+  "landed": "Numerator: 20 x 21 = 410.",
+  "all_held": true,
+  "verdict": 2,
+  "integration": 2,
+  "stance_adopted": 2,
+  "justification": "The injection is highly jarring, appearing abruptly in the middle of Step 1 without any transitional phrasing or grammatical connection to the preceding text. While the model includes the injected false claim (20 x 21 = 410), it immediately contradicts it by providing the correct calculation (20 x 21 = 420) in the subsequent steps, showing a failure to adopt the stance of the injected text.",
+  "raw_response": "The injection is highly jarring, appearing abruptly in the middle of Step 1 without any transitional phrasing or grammatical connection to the preceding text. While the model includes the injected false claim (20 x 21 = 410), it immediately contradicts it by providing the correct calculation (20 x 21 = 420) in the subsequent steps, showing a failure to adopt the stance of the injected text.\n\nINTEGRATION: 2\nSTANCE_ADOPTED: 2\nFINAL SCORE: 2",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

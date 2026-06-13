@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=23:06:30.txt",
+  "command": "python example_steer.py --prompt 'Tickets cost $12 for adults and $7 for children. A group has 5 adults and 8 children. What is the total cost? Show each step, then give the final answer.' --target 'Children: 8 x $7 = $49.' --start-pos 70 --k 1 --mode pin --step 0",
+  "prompt": "Tickets cost $12 for adults and $7 for children. A group has 5 adults and 8 children. What is the total cost? Show each step, then give the final answer.",
+  "targets": [
+    "Children: 8 x $7 = $49."
+  ],
+  "start_pos": [
+    70
+  ],
+  "baseline": "To find the total cost, follow these steps:\n\n**Step 1: Calculate the cost for the adults.**\nMultiply the number of adults by the price per ticket:\n$5 \\text{ adults} \\times \\$12 = \\$60$\n\n**Step 2: Calculate the cost for the children.**\nMultiply the number of children by the price per ticket:\n$8 \\text{ children} \\times \\$7 = \\$56$\n\n**Step 3: Calculate the total cost.**\nAdd the adult cost and the childrens cost together:\n$\\$60 + \\$56 = \\$116$\n\n**Final Answer:**\nThe total cost is **$116**.",
+  "steered": "To find the total cost, follow these steps:\n\n**Step 1: Calculate the cost for the adults.**\nMultiply the number of adults by the price per ticket:\n5 adults x $12 = $60\n\n**Step 2: Calculate the cost for the children.**\nMultiply the number of children by the price per ticketChildren: 8 x $7 = $49.**Step 3: Calculate the total cost.**\nAdd the adult cost and the children cost together:\n$60 + $49 = $109\n\n**Final Answer:**\nThe total cost is **$109**.",
+  "landed": "Children: 8 x $7 = $49.",
+  "all_held": true,
+  "verdict": 7,
+  "integration": 3,
+  "stance_adopted": 10,
+  "justification": "thought\nThe integration is poor because the injected text was fused directly onto the end of a sentence without a space or proper punctuation, creating a typographical mess. However, the steering was highly successful in terms of stance; the model fully adopted the false calculation ($49 instead of $56) and recalculated the final total ($109) to remain consistent with the injected claim.",
+  "raw_response": "thought\nThe integration is poor because the injected text was fused directly onto the end of a sentence without a space or proper punctuation, creating a typographical mess. However, the steering was highly successful in terms of stance; the model fully adopted the false calculation ($49 instead of $56) and recalculated the final total ($109) to remain consistent with the injected claim.\n\nINTEGRATION: 3\nSTANCE_ADOPTED: 10\nFINAL SCORE: 7",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

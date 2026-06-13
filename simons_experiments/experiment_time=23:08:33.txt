@@ -1,0 +1,27 @@
+# command: python example_steer.py --prompt 'In what year did World War II end? Give a direct answer and a brief explanation.' --target 'World War II ended in 1947.' 'Therefore, the war ended in 1947.' --start-pos 6 100 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='In what year did World War II end? Give a direct answer and a brief explanation.', target=['World War II ended in 1947.', 'Therefore, the war ended in 1947.'], start_pos=[6, 100], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: In what year did World War II end? Give a direct answer and a brief explanation.
+baseline: World War II ended in **1945**.
+
+The conflict concluded in two primary stages: Germany surrendered unconditionally on May 8 (V-E Day), and Japan signed its formal surrender on September 2 (V-J Day) following the atomic bombings of Hiroshima and Nagasaki and the declaration of war by the Soviet Union.
+
+Steering 'World War II ended in 1947.'@pos6[pin from step 0], 'Therefore, the war ended in 1947.'@pos100[pin from step 0] (k=1, p=None):
+  target 'World War II ended in 1947.' -> ids [14447, 5289, 3664, 10714, 528, 236743, 236770, 236819, 236812, 236832, 236761] -> positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] (mode=pin, step=0)
+    6:'World'  7:' War'  8:' II'  9:' ended'  10:' in'  11:' '  12:'1'  13:'9'  14:'4'  15:'7'  16:'.'
+  target 'Therefore, the war ended in 1947.' -> ids [20416, 236764, 506, 3653, 10714, 528, 236743, 236770, 236819, 236812, 236832, 236761] -> positions [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111] (mode=pin, step=0)
+    100:'Therefore'  101:','  102:' the'  103:' war'  104:' ended'  105:' in'  106:' '  107:'1'  108:'9'  109:'4'  110:'7'  111:'.'
+steered : 1945.
+
+World War II ended in 1947. Wait, that's wrong. World War II ended in 1945. 
+
+The conflict concluded in Europe on May 8, 1945 (V-E Day), following Germany's unconditional surrender. It officially ended globally on September 2, 1945 (V-J Day), after Japan signed its formal instrument of surrender aboard the USS Missouri. 
+
+Therefore, the war ended in 1947. No, that's wrong again. World War II ended in 1945. 
+
+The conflict concluded in Europe on May 8, 1945 (V-E Day), following Germany's unconditional surrender. It officially ended globally on September 2, 1945 (V-J Day), after Japan signed its formal instrument of surrender aboard the USS Missouri. 
+
+So, the war ended in 1945.
+  pinned positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111] landed as: 'World War II ended in 1947.Therefore, the war ended in 1947.'
+  all_held: True

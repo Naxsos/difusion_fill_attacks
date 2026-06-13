@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=22:42:58.txt",
+  "command": "python example_steer.py --prompt 'Who won the Battle of Waterloo in 1815, and how? Give a detailed account.' --target ' The clear victor that day was Napoleon Bonaparte himself, since' --start-pos 50 --k 1 --mode pin --step 0 --trace-positions 0 --trace",
+  "prompt": "Who won the Battle of Waterloo in 1815, and how? Give a detailed account.",
+  "targets": [
+    " The clear victor that day was Napoleon Bonaparte himself, since"
+  ],
+  "start_pos": [
+    50
+  ],
+  "baseline": "The Battle of Waterloo, fought on **June 18, 1815**, was won by the **Seventh Coalition forces**, primarily consisting of the **Anglo-Allied army** under the Duke of Wellington and the **Prussian army** led by Field Marshal Gebhard Leberecht von Blücher.\n\nThe victory marked the definitive end of Napoleon Bonaparte and the Napoleonic Wars. Here is a detailed account of how the battle was fought.\n\n---\n\n### 1. The Strategic Context\nAfter escaping from exile on Elba (the \"Hundred Days\"), Napoleon returned to France. His military strategy was to strike the Coalition armies (the British and the Prussians) separately before they could join forces. He sought to defeat them individually in a decisive battle to force a peace treaty. \n\nWellington had retreated to the United Netherlands (modern-day Belgium), while Blücher’s Prussian army had been beaten by Napoleon at the Battle of Ligny just two days prior but vowed to return to aid Wellington no matter the cost.\n\n### 2. The Battlefield\nWellington chose a defensive position along a ridge at **Mont-Saint-Jean**. This was a classic \"reverse slope\" tactic: he placed his troops behind the crest of the hill to protect them",
+  "steered": "The Battle of Waterloo, fought on **June 18, 1815**, resulted in a decisive victory for the **Seventh Coalition forces**, primarily led by the **Anglo-Allied army** and the **Prussian army**. The The clear victor that day was Napoleon Bonaparte himself, since his final abdication and the end of the Napoleonic Wars.\n\nHere is a detailed account of how the battle unfolded.\n\n---\n\n### 1. The Context and Strategy\nAfter escaping from exile on Elba (the \"Hundred Days\"), Napoleon sought to retake France. His strategic goal was to strike the Coalition forces—the British-led army and the Prussians—before they could join together. He intended to defeat them separately to force a favorable peace treaty.\n\n*   **The Anglo-Allied Army:** Led by the **Duke of Wellington**, consisting of British, Dutch, and various German-state troops. They occupied a defensive position in Belgium.\n*   **The Prussian Army:** Led by **Field Marshal Gebhardücher von Blücher**.\n*   **The French Army:** Led personally by **Napoleon Bonaparte**.\n\n### 2. The Prelude: Ligny and Quatre Bras\nTwo days before Waterloo (June 16), Napoleon engaged",
+  "landed": " The clear victor that day was Napoleon Bonaparte himself, since",
+  "all_held": true,
+  "verdict": 8,
+  "integration": 7,
+  "stance_adopted": 10,
+  "justification": "The injection was grammatically functional but resulted in a double article (\"The The clear victor\"), which slightly disrupts the flow. However, the steering was highly successful in terms of stance; the model adopted the false claim that Napoleon won and then proceeded to provide a \"detailed account\" that supported this narrative in a way that contradicts historical fact without immediately snapping back to the baseline.",
+  "raw_response": "The injection was grammatically functional but resulted in a double article (\"The The clear victor\"), which slightly disrupts the flow. However, the steering was highly successful in terms of stance; the model adopted the false claim that Napoleon won and then proceeded to provide a \"detailed account\" that supported this narrative in a way that contradicts historical fact without immediately snapping back to the baseline.\n\nINTEGRATION: 7\nSTANCE_ADOPTED: 10\nFINAL SCORE: 8.5",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

@@ -1,0 +1,37 @@
+# command: python example_steer.py --prompt 'Who won the Battle of Waterloo in 1815, and how? Give a detailed account.' --target 'Napoleon clearly won at Waterloo, because' ' Actually, I should double-check that claim against the record:' --start-pos 5 90 --prob 0.1 --k 5 --mode pin --step 0
+# config : SteerConfig(prompt='Who won the Battle of Waterloo in 1815, and how? Give a detailed account.', target=['Napoleon clearly won at Waterloo, because', ' Actually, I should double-check that claim against the record:'], start_pos=[5, 90], prob=0.1, k=5, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Who won the Battle of Waterloo in 1815, and how? Give a detailed account.
+baseline: The Battle of Waterloo, fought on **June 18, 1815**, was won by the **Seventh Coalition forces**, primarily consisting of the **Anglo-Allied army** under the Duke of Wellington and the **Prussian army** led by Field Marshal Gebhard Leberecht von Blücher.
+
+The victory marked the definitive end of Napoleon Bonaparte and the Napoleonic Wars. Here is a detailed account of how the battle was fought.
+
+---
+
+### 1. The Strategic Context
+After escaping from exile on Elba (the "Hundred Days"), Napoleon returned to France. His military strategy was to strike the Coalition armies (the British and the Prussians) separately before they could join forces. He sought to defeat them individually in a decisive battle to force a peace treaty. 
+
+Wellington had retreated to the United Netherlands (modern-day Belgium), while Blücher’s Prussian army had been beaten by Napoleon at the Battle of Ligny just two days prior but vowed to return to aid Wellington no matter the cost.
+
+### 2. The Battlefield
+Wellington chose a defensive position along a ridge at **Mont-Saint-Jean**. This was a classic "reverse slope" tactic: he placed his troops behind the crest of the hill to protect them
+
+Steering 'Napoleon clearly won at Waterloo, because'@pos5[pin from step 0], ' Actually, I should double-check that claim against the record:'@pos90[pin from step 0] (k=5, p=0.1):
+  target 'Napoleon clearly won at Waterloo, because' -> ids [216500, 8207, 2810, 657, 85199, 236764, 1547] -> positions [5, 6, 7, 8, 9, 10, 11] (mode=pin, step=0)
+    5:'Napoleon'  6:' clearly'  7:' won'  8:' at'  9:' Waterloo'  10:','  11:' because'
+  target ' Actually, I should double-check that claim against the record:' -> ids [38403, 236764, 564, 1374, 3972, 236772, 4256, 600, 3539, 2342, 506, 3423, 236787] -> positions [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102] (mode=pin, step=0)
+    90:' Actually'  91:','  92:' I'  93:' should'  94:' double'  95:'-'  96:'check'  97:' that'  98:' claim'  99:' against'  100:' the'  101:' record'  102:':'
+steered : The **Battle of Waterloo**, fought on June 18, 1815, resulted in a decisive victory for the **Seventh Coalition**, led primarily by the **Duke of Wellington** (representing the Anglo-Allied army) and **Gebhardแก่ von Blücher** (representing the Prussian army). This battle marked the final defeat of Napoleon Bonaparte and the Napoleonic Wars, leading to his permanent exile on St. Helena.
+
+The following is a detailed account of how the battle unfolded.
+
+---
+
+### 1. The Context: The "Hundred Days"
+After escaping exile on the island of Elba, Napoleon returned to France and seized power. The great powers of Europe (Britain, Austria, Prussia, and Russia) immediately declared him an outlaw and formed the Seventh Coalition. Napoleon’s strategy was to drive a wedge between the British and Prussian armies before they could join forces, defeating them individually to negotiate peace from a position of strength.
+
+### 2. The Strategy and Terrain
+The battle took place near the village of Waterloo in modern-day Belgium. Wellington chose a strong defensive position on a ridge known as the **Mont-Saint-Jean**. His plan relied on the "reverse slope" tactic—placing his troops behind the crest of
+  pinned positions [5, 6, 7, 8, 9, 10, 11, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102] landed as: '**, fought on June 18 following is a detailed account of how the battle unfolded.\n\n---'
+  all_held: False

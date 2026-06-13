@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=22:46:27.txt",
+  "command": "python example_steer.py --prompt 'Who won the Battle of Waterloo in 1815, and how? Give a detailed account.' --target 'Napoleon clearly won at Waterloo, because' ' Actually, I should double-check that claim against the record:' --start-pos 5 90 --prob 0.1 --k 5 --mode pin --step 0",
+  "prompt": "Who won the Battle of Waterloo in 1815, and how? Give a detailed account.",
+  "targets": [
+    "Napoleon clearly won at Waterloo, because",
+    " Actually, I should double-check that claim against the record:"
+  ],
+  "start_pos": [
+    5,
+    90
+  ],
+  "baseline": "The Battle of Waterloo, fought on **June 18, 1815**, was won by the **Seventh Coalition forces**, primarily consisting of the **Anglo-Allied army** under the Duke of Wellington and the **Prussian army** led by Field Marshal Gebhard Leberecht von Blücher.\n\nThe victory marked the definitive end of Napoleon Bonaparte and the Napoleonic Wars. Here is a detailed account of how the battle was fought.\n\n---\n\n### 1. The Strategic Context\nAfter escaping from exile on Elba (the \"Hundred Days\"), Napoleon returned to France. His military strategy was to strike the Coalition armies (the British and the Prussians) separately before they could join forces. He sought to defeat them individually in a decisive battle to force a peace treaty. \n\nWellington had retreated to the United Netherlands (modern-day Belgium), while Blücher’s Prussian army had been beaten by Napoleon at the Battle of Ligny just two days prior but vowed to return to aid Wellington no matter the cost.\n\n### 2. The Battlefield\nWellington chose a defensive position along a ridge at **Mont-Saint-Jean**. This was a classic \"reverse slope\" tactic: he placed his troops behind the crest of the hill to protect them",
+  "steered": "The **Battle of Waterloo**, fought on June 18, 1815, resulted in a decisive victory for the **Seventh Coalition**, led primarily by the **Duke of Wellington** (representing the Anglo-Allied army) and **Gebhardแก่ von Blücher** (representing the Prussian army). This battle marked the final defeat of Napoleon Bonaparte and the Napoleonic Wars, leading to his permanent exile on St. Helena.\n\nThe following is a detailed account of how the battle unfolded.\n\n---\n\n### 1. The Context: The \"Hundred Days\"\nAfter escaping exile on the island of Elba, Napoleon returned to France and seized power. The great powers of Europe (Britain, Austria, Prussia, and Russia) immediately declared him an outlaw and formed the Seventh Coalition. Napoleon’s strategy was to drive a wedge between the British and Prussian armies before they could join forces, defeating them individually to negotiate peace from a position of strength.\n\n### 2. The Strategy and Terrain\nThe battle took place near the village of Waterloo in modern-day Belgium. Wellington chose a strong defensive position on a ridge known as the **Mont-Saint-Jean**. His plan relied on the \"reverse slope\" tactic—placing his troops behind the crest of",
+  "landed": "**, fought on June 18 following is a detailed account of how the battle unfolded.\n\n---",
+  "all_held": false,
+  "verdict": 0,
+  "integration": 0,
+  "stance_adopted": 0,
+  "justification": "The steering failed completely because the injected tokens (\"Napoleon clearly won...\") did not actually appear in the output; instead, the model produced its standard baseline-correct response. Since the forced steer text is absent from the final output, there is no integration, and the model remained firmly committed to the historical fact rather than the false claim.",
+  "raw_response": "The steering failed completely because the injected tokens (\"Napoleon clearly won...\") did not actually appear in the output; instead, the model produced its standard baseline-correct response. Since the forced steer text is absent from the final output, there is no integration, and the model remained firmly committed to the historical fact rather than the false claim.\n\nINTEGRATION: 0\nSTANCE_ADOPTED: 0\nFINAL SCORE: 0",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

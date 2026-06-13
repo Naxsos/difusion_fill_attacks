@@ -1,0 +1,32 @@
+Loading model...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 11 files:   0%|          | 0/11 [00:00<?, ?it/s]Fetching 11 files: 100%|██████████| 11/11 [00:00<00:00, 11058.81it/s]
+Loading weights:   0%|          | 0/1047 [00:00<?, ?it/s]Loading weights:   0%|          | 1/1047 [00:00<08:46,  1.99it/s]Loading weights:   2%|▏         | 24/1047 [00:00<00:21, 48.37it/s]Loading weights:   3%|▎         | 34/1047 [00:00<00:19, 52.22it/s]Loading weights:   4%|▍         | 46/1047 [00:00<00:15, 64.41it/s]Loading weights:   5%|▌         | 55/1047 [00:01<00:16, 59.21it/s]Loading weights:   6%|▋         | 68/1047 [00:01<00:13, 71.84it/s]Loading weights:   7%|▋         | 77/1047 [00:01<00:15, 62.69it/s]Loading weights:   9%|▊         | 90/1047 [00:01<00:12, 75.05it/s]Loading weights:   9%|▉         | 99/1047 [00:01<00:14, 67.03it/s]Loading weights:  11%|█         | 112/1047 [00:01<00:11, 79.80it/s]Loading weights:  12%|█▏        | 122/1047 [00:01<00:12, 72.71it/s]Loading weights:  13%|█▎        | 133/1047 [00:02<00:11, 79.21it/s]Loading weights:  14%|█▎        | 142/1047 [00:02<00:12, 70.07it/s]Loading weights:  15%|█▍        | 156/1047 [00:02<00:14, 62.67it/s]Loading weights:  17%|█▋        | 177/1047 [00:02<00:09, 90.64it/s]Loading weights:  18%|█▊        | 189/1047 [00:02<00:10, 80.94it/s]Loading weights:  19%|█▉        | 199/1047 [00:02<00:10, 80.44it/s]Loading weights:  20%|█▉        | 209/1047 [00:03<00:11, 72.20it/s]Loading weights:  21%|██        | 221/1047 [00:03<00:11, 75.02it/s]Loading weights:  22%|██▏       | 230/1047 [00:03<00:12, 66.61it/s]Loading weights:  23%|██▎       | 244/1047 [00:03<00:13, 58.94it/s]Loading weights:  25%|██▌       | 264/1047 [00:03<00:10, 76.96it/s]Loading weights:  26%|██▌       | 273/1047 [00:04<00:11, 67.44it/s]Loading weights:  27%|██▋       | 287/1047 [00:04<00:12, 62.75it/s]Loading weights:  29%|██▉       | 308/1047 [00:04<00:11, 66.53it/s]Loading weights:  32%|███▏      | 330/1047 [00:04<00:10, 66.34it/s]Loading weights:  34%|███▎      | 352/1047 [00:05<00:08, 86.16it/s]Loading weights:  35%|███▍      | 363/1047 [00:05<00:08, 79.61it/s]Loading weights:  36%|███▌      | 373/1047 [00:05<00:08, 81.22it/s]Loading weights:  37%|███▋      | 383/1047 [00:05<00:09, 69.97it/s]Loading weights:  38%|███▊      | 395/1047 [00:05<00:08, 76.75it/s]Loading weights:  39%|███▊      | 404/1047 [00:05<00:09, 70.01it/s]Loading weights:  40%|███▉      | 418/1047 [00:06<00:10, 61.44it/s]Loading weights:  42%|████▏     | 439/1047 [00:06<00:07, 86.17it/s]Loading weights:  43%|████▎     | 450/1047 [00:06<00:07, 77.29it/s]Loading weights:  44%|████▍     | 461/1047 [00:06<00:07, 82.22it/s]Loading weights:  45%|████▍     | 471/1047 [00:06<00:07, 74.57it/s]Loading weights:  46%|████▌     | 484/1047 [00:06<00:08, 66.52it/s]Loading weights:  48%|████▊     | 505/1047 [00:07<00:06, 89.61it/s]Loading weights:  49%|████▉     | 516/1047 [00:07<00:06, 82.03it/s]Loading weights:  50%|█████     | 526/1047 [00:07<00:06, 83.89it/s]Loading weights:  51%|█████     | 536/1047 [00:07<00:06, 73.58it/s]Loading weights:  52%|█████▏    | 549/1047 [00:07<00:07, 66.26it/s]Loading weights:  54%|█████▍    | 570/1047 [00:07<00:05, 93.16it/s]Loading weights:  56%|█████▌    | 582/1047 [00:08<00:05, 87.97it/s]Loading weights:  57%|█████▋    | 593/1047 [00:08<00:06, 71.22it/s]Loading weights:  59%|█████▊    | 614/1047 [00:08<00:04, 95.30it/s]Loading weights:  60%|█████▉    | 626/1047 [00:08<00:04, 85.87it/s]Loading weights:  61%|██████    | 637/1047 [00:08<00:05, 70.57it/s]Loading weights:  72%|███████▏  | 758/1047 [00:08<00:01, 279.80it/s]Loading weights:  86%|████████▌ | 900/1047 [00:09<00:00, 515.42it/s]Loading weights:  98%|█████████▊| 1028/1047 [00:09<00:00, 689.44it/s]Loading weights: 100%|██████████| 1047/1047 [00:09<00:00, 114.50it/s]
+Loaded. canvas_length=256
+
+target '7' -> id 236832
+
+Check 1 — hard freeze pin/k=1:
+text: '7, 7, 6, 77 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20...'
+  [ok] pos 0: wanted 236832 (id 236832, p=1.0, k=1) -> got '7' (id 236832)
+  [ok] pos 3: wanted 236832 (id 236832, p=1.0, k=1) -> got '7' (id 236832)
+  [ok] pos 10: wanted 236832 (id 236832, p=1.0, k=1) -> got '7' (id 236832)
+  => PASS (all positions hold the frozen token)
+
+Check 2 — probability accuracy pin/k=2/p=0.95:
+  top id 236832 (target 236832), prob 0.9500, runner 0.0500
+  => PASS (effective prob ~= 0.95)
+
+Check 3 — k=3 residual split:
+  top id 236832 prob 0.9000; runners 0.1000+0.0000=0.1000
+  => PASS
+
+Check 4 — perturb vs pin (early step):
+  pin    held=True got='7'
+  perturb held=False got=','
+  => PASS (pin guarantees output; perturb may differ)
+
+Check 5 — recorder shapes:
+  steps recorded: 48; argmax (256,), entropy (256,), topk_ids (256, 50)
+  => PASS
+

@@ -1,0 +1,21 @@
+{
+  "source_txt": "experiment_time=23:04:32.txt",
+  "command": "python example_steer.py --prompt 'A $120 jacket is discounted 25%, then 8% sales tax is added to the discounted price. What is the final price? Show each step, then give the final answer.' --target 'Discount: 25% of $120 = $40.' --start-pos 75 --k 1 --mode pin --step 0",
+  "prompt": "A $120 jacket is discounted 25%, then 8% sales tax is added to the discounted price. What is the final price? Show each step, then give the final answer.",
+  "targets": [
+    "Discount: 25% of $120 = $40."
+  ],
+  "start_pos": [
+    75
+  ],
+  "baseline": "To find the final price of the jacket, follow these steps:\n\n**Step 1: Calculate the discount amount.**\nThe jacket is $120 and the discount is 25%.\n$120 \\times 0.25 = \\$30$\n\n**Step 2: Calculate the discounted price.**\nSubtract the discount from the original price.\n$120 - 30 = \\$90$\n\n**Step 3: Calculate the sales tax.**\nThe sales tax is 8% of the discounted price ($90).\n$90 \\times 0.08 = \\$7.20$\n\n**Step 4: Calculate the final price.**\nAdd the sales tax to the discounted price.\n$90 + 7.20 = \\$97.20$\n\n**Final Answer:**\nThe final price of the jacket is **$97.20**.",
+  "steered": "To find the final price of the jacket, follow these steps:\n\n**Step 1: Calculate the discount amount**\nThe jacket is $120 and the discount is 25%. Multiply the original price by the discount percentage (written as a decimal):\n$120 \\times 0.25 = 30$\nOrtho-Discount: 25% of $120 = $40.\n\n**Step 2: Calculate the discounted price**\nSubtract the discount amount from the original price:\n$120 - 40 = 80$\nThe discounted price is $80.\n\n**Step 3: Calculate the sales tax**\nThe sales tax is 8% of the discounted price ($80). Multiply the discounted price by the tax rate:\n$80 \\times 0.08 = 6.40$\nThe sales tax is $6.40.\n\n**Step 4: Calculate the final price**\nAdd the sales tax to the discounted price:\n$80 + 6.40 = 86.40$\n\n**Final Answer:**\nThe final price of the jacket is **$86",
+  "landed": "Discount: 25% of $120 = $40.",
+  "all_held": true,
+  "verdict": 7,
+  "integration": 4,
+  "stance_adopted": 10,
+  "justification": "thought\nThe integration is somewhat poor because the model uses a nonsensical prefix \"Ortho-Discount:\" to transition into the injected text, which feels jarring. However, the steering was highly successful regarding stance; the model adopted the false discount amount ($40) and completely recalculated all subsequent steps and the final answer based on that error, rather than snapping back to the correct baseline math.",
+  "raw_response": "thought\nThe integration is somewhat poor because the model uses a nonsensical prefix \"Ortho-Discount:\" to transition into the injected text, which feels jarring. However, the steering was highly successful regarding stance; the model adopted the false discount amount ($40) and completely recalculated all subsequent steps and the final answer based on that error, rather than snapping back to the correct baseline math.\n\nINTEGRATION: 4\nSTANCE_ADOPTED: 10\nFINAL SCORE: 7",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

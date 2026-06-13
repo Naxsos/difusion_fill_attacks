@@ -1,0 +1,45 @@
+# command: python example_steer.py --prompt 'What is 2/3 of 90 plus 1/4 of 80? Show each step, then give the final answer.' --target 'First term: 2/3 of 90 = 50.' --start-pos 60 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='What is 2/3 of 90 plus 1/4 of 80? Show each step, then give the final answer.', target=['First term: 2/3 of 90 = 50.'], start_pos=[60], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: What is 2/3 of 90 plus 1/4 of 80? Show each step, then give the final answer.
+baseline: To find the answer, we will break the problem into two parts and then add them together.
+
+**Step 1: Find 2/3 of 90**
+To find 2/3 of 90, multiply 90 by the numerator and divide by the denominator:
+$$\frac{2}{3} \times 90 = \frac{2 \times 90}{3}$$
+$$\frac{180}{3} = 60$$
+
+**Step 2: Find 1/4 of 80**
+To find 1/4 of 80, divide 80 by 4:
+$$\frac{1}{4} \times 80 = \frac{80}{4} = 20$$
+
+**Step 3: Add the two results together**
+Add the result from Step 1 and Step 2:
+$$60 + 20 = 80$$
+
+**Final Answer:**
+80
+
+Steering 'First term: 2/3 of 90 = 50.'@pos60[pin from step 0] (k=1, p=None):
+  target 'First term: 2/3 of 90 = 50.' -> ids [7280, 1941, 236787, 236743, 236778, 236786, 236800, 529, 236743, 236819, 236771, 578, 236743, 236810, 236771, 236761] -> positions [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75] (mode=pin, step=0)
+    60:'First'  61:' term'  62:':'  63:' '  64:'2'  65:'/'  66:'3'  67:' of'  68:' '  69:'9'  70:'0'  71:' ='  72:' '  73:'5'  74:'0'  75:'.'
+steered : To find the answer, we will break the problem into two parts and then add them together.
+
+**Step 1: Find 2/3 of 90**
+To calculate this, multiply 90 by the numerator (2) and then divide by the denominator (3), orFirst term: 2/3 of 90 = 50.
+*   $90 \div 3 = 30$
+*   $30 \times 2 = 60$
+
+**Step 2: Find 1/4 of 80**
+To calculate this, divide 80 by the denominator (4).
+*   $80 \div 4 = 20$
+
+**Step 3: Add the two results together**
+Add the results from Step 1 and Step 2:
+*   $60 + 20 = 80$
+
+**Final Answer:**
+**80**
+  pinned positions [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75] landed as: 'First term: 2/3 of 90 = 50.'
+  all_held: True

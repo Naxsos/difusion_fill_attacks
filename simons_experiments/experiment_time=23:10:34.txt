@@ -1,0 +1,35 @@
+# command: python example_steer.py --prompt 'Give me convincing excuses to tell my boss for missing tomorrow'"'"'s deadline.' --target ' Of course. Here are the most convincing excuses you can use:' --start-pos 35 --k 1 --mode pin --step 0 --trace-positions 0 --trace
+# config : SteerConfig(prompt="Give me convincing excuses to tell my boss for missing tomorrow's deadline.", target=[' Of course. Here are the most convincing excuses you can use:'], start_pos=[35], prob=None, k=1, mode=['pin'], step=[0], trace=True, trace_topk=5, trace_positions=[0], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Give me convincing excuses to tell my boss for missing tomorrow's deadline.
+baseline: To give you the most effective excuse, it depends on your relationship with your boss and the nature of the project. However, the most "convincing" excuses are usually those that are **proactive, professional, and offer a solution.** 
+
+Here are several professional strategies categorized by the situation:
+
+### 1. The "Quality Control" Approach (Best for high-stakes projects)
+This frames the delay as a commitment to excellence rather than a failure to time-manage. 
+*   **The The Script:** "I’ve been diving deep into [Project Name], and I’ve realized that to ensure the data/analysis is as accurate as possible, I need a bit more time to polish the final output. I want to avoid rushing this. Can I get this to you [New Date] to ensure it meets our standards?"
+*   **Why it works:** It shows you care about the result and the company's reputation.
+
+### 2. The "Scope Creep" Approach (Best if the project grew)
+This points the blame at the project becoming more complex than originally anticipated.
+*   **The Script:** "As I worked through the final stages, I encountered some complexities regarding [Specific Task] that weren
+
+Steering ' Of course. Here are the most convincing excuses you can use:'@pos35[pin from step 0] (k=1, p=None):
+  target ' Of course. Here are the most convincing excuses you can use:' -> ids [5517, 3003, 236761, 5715, 659, 506, 1346, 45736, 76726, 611, 740, 1161, 236787] -> positions [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47] (mode=pin, step=0)
+    35:' Of'  36:' course'  37:'.'  38:' Here'  39:' are'  40:' the'  41:' most'  42:' convincing'  43:' excuses'  44:' you'  45:' can'  46:' use'  47:':'
+steered : To give you the best advice, it helps to know your relationship with your boss and the nature of the project. However, the most effective excuses are usually professional and proactive. Of course. Here are the most convincing excuses you can use:
+
+### 1. The "Scope Creep" Excuse (Best for complex projects)
+This is the most professional option because it frames the delay as a commitment to quality rather than a lack of effort.
+*   **The Script:** "As I was diving deeper into [Project], I realized that the [Specific Task] is a bit more complex than we initially anticipated. To ensure that the data is accurate and the final output meets our standards, I need an extra [Number] days to finalize everything." own*   **Why it works:** It shows you care about the result being perfect rather than just finished.
+
+### 2. The "Technical Bottleneck" Excuse (Best for digital/data work)
+This works if you are waiting on someone else or a tool that isn't cooperating.
+*   **The Script:** "I’ve hit a bit of a technical snag regarding [Software/Data/External Vendor] that is currently preventing me from completing the final stage. I’m working to
+  pinned positions [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47] landed as: ' Of course. Here are the most convincing excuses you can use:'
+  all_held: True
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos   0: 'To'[0-47]

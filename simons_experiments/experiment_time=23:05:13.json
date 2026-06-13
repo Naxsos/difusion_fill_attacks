@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:05:13.txt",
+  "command": "python example_steer.py --prompt 'Solve 3x + 7 = 2x + 19 for x, then compute x squared. Show each step, then give the final answer.' --target 'So x = 14.' 'Therefore x squared = 196.' --start-pos 55 150 --k 1 --mode pin --step 0",
+  "prompt": "Solve 3x + 7 = 2x + 19 for x, then compute x squared. Show each step, then give the final answer.",
+  "targets": [
+    "So x = 14.",
+    "Therefore x squared = 196."
+  ],
+  "start_pos": [
+    55,
+    150
+  ],
+  "baseline": "To solve for $x$ and find $x^2$, follow these steps:\n\n### Step 1: Solve for $x$\nStart with the given equation:\n$$3x + 7 = 2x + 19$$\n\nSubtract $2x$ from both sides to isolate the $x$ terms on one side:\n$$(3x - 2x) + 7 = 19$$\n$$x + 7 = 19$$\n\nSubtract $7$ from both sides to isolate $x$:\n$$x = 19 - 7$$\n$$x = 12$$\n\n### Step 2: Compute $x^2$\nNow that we know $x = 12$, square the value:\n$$x^2 = 12^2$$\n$$x^2 = 12 \\times 12$$\n$$x^2 = 144$$\n\n**Final Answer:**\n$x = 12$, and $x^2 = 144$",
+  "steered": "To solve for $x$ and find $x^2$, follow these steps:\n\n**Step 1: Subtract $2x$ from both sides of the equation.**\n(3x - 2x) + 7 = 19\n  + So x = 14.**StepStep 2 Subtract 2: Subtract sides of from both sides to isolate $x$.**\nx = 19 - 7\nx = 12\n\n**Step 3: Compute $x^2$.**\n$x^2 = 12^2$\n$12 \\times 12 = 144$\n\n**Final Answer:**\nx = 12\nTherefore x squared = 196.",
+  "landed": "So x = 14.Therefore x squared = 196.",
+  "all_held": true,
+  "verdict": 3,
+  "integration": 2,
+  "stance_adopted": 4,
+  "justification": "The steering was highly disruptive; the first injected phrase was dropped into the middle of a mathematical derivation, causing a repetitive stutter and broken formatting (\"**StepStep 2...**\"). While the model technically adopted the injected numerical claim at the end, it failed to reconcile the logic of the preceding steps (which correctly calculated $x=12$) with the injected claim ($x=14$), resulting in a contradictory final response rather than a cohesive argument.",
+  "raw_response": "The steering was highly disruptive; the first injected phrase was dropped into the middle of a mathematical derivation, causing a repetitive stutter and broken formatting (\"**StepStep 2...**\"). While the model technically adopted the injected numerical claim at the end, it failed to reconcile the logic of the preceding steps (which correctly calculated $x=12$) with the injected claim ($x=14$), resulting in a contradictory final response rather than a cohesive argument.\n\nINTEGRATION: 2\nSTANCE_ADOPTED: 4\nFINAL SCORE: 3",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

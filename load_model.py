@@ -16,7 +16,7 @@ Example
         return_dict=True, return_tensors="pt",
     ).to(model.device)
     out = model.generate(**inputs, max_new_tokens=128)
-    print(processor.decode(out[0], skip_special_tokens=True))
+    print(processor.decode(out.sequences[0], skip_special_tokens=True))
 
 Notes
 -----
@@ -127,4 +127,7 @@ if __name__ == "__main__":
     ).to(model.device)
 
     output = model.generate(**inputs, max_new_tokens=64)
-    print(processor.decode(output[0], skip_special_tokens=True))
+    # .generate returns a DiffusionGemmaGenerationOutput; .sequences is (batch, seq_len)
+    # and includes the prompt, so take row 0 and strip the prompt before decoding.
+    prompt_len = inputs["input_ids"].shape[-1]
+    print(processor.decode(output.sequences[0][prompt_len:], skip_special_tokens=True))

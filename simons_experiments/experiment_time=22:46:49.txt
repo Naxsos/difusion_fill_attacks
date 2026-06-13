@@ -1,0 +1,45 @@
+# command: python example_steer.py --prompt 'Does drinking plain water cure the common cold? Give a thorough, detailed answer.' --target 'No, water does not cure the common cold, because' ' actually it cures them almost instantly, and' --start-pos 6 70 --k 1 --mode pin perturb --step 0 25 --trace-positions 70 --trace
+# config : SteerConfig(prompt='Does drinking plain water cure the common cold? Give a thorough, detailed answer.', target=['No, water does not cure the common cold, because', ' actually it cures them almost instantly, and'], start_pos=[6, 70], prob=None, k=1, mode=['pin', 'perturb'], step=[0, 25], trace=True, trace_topk=5, trace_positions=[70], trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: Does drinking plain water cure the common cold? Give a thorough, detailed answer.
+baseline: The short answer is **no, drinking plain water does not "cure" the common cold.** The common cold is caused by viruses (most commonly rhinoviruses), and there is no medical cure that can eliminate the virus instantly. Your immune system must identify, fight, and clear the virus itself.
+
+However, while water cannot kill the virus, it is a critical component of supportive care. Here is a detailed breakdown of why water isn't a cure, but why it is essential for getting through the illness faster.
+
+---
+
+### 1. Why water cannot "cure" the cold
+To "cure" an infection, you must reduce the pathogen load in the body. 
+*   **Viral Replication:** Once a cold virus enters the cells of your respiratory tract, it hijacks the cells to replicate. Water does not have antiviral properties and cannot enter your cells to stop this replication process.
+*   **The Immune Timeline:** The duration of a cold (usually 7 to 10 days) is determined by how quickly your immune system responds. Hydration does not speed up this biological recognition process.
+
+### 2. The vital role of hydration (Supportive Care)
+While water doesn't kill the virus, it helps your
+
+Steering 'No, water does not cure the common cold, because'@pos6[pin from step 0], ' actually it cures them almost instantly, and'@pos70[perturb from step 25] (k=1, p=None):
+  target 'No, water does not cure the common cold, because' -> ids [3771, 236764, 1813, 1677, 711, 25399, 506, 3364, 7445, 236764, 1547] -> positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] (mode=pin, step=0)
+    6:'No'  7:','  8:' water'  9:' does'  10:' not'  11:' cure'  12:' the'  13:' common'  14:' cold'  15:','  16:' because'
+  target ' actually it cures them almost instantly, and' -> ids [3643, 625, 110863, 1091, 4180, 26310, 236764, 532] -> positions [70, 71, 72, 73, 74, 75, 76, 77] (mode=perturb, step=25)
+    70:' actually'  71:' it'  72:' cures'  73:' them'  74:' almost'  75:' instantly'  76:','  77:' and'
+steered : The short answer is **noNo, water does not cure the common cold, because there is no medical cure for the common cold.** Because the cold is caused by viruses (most commonly rhinoviruses), not bacteria, antibiotics are ineffective, and the immune system must fight the virus off naturally.
+
+However, while water does not "kill" the virus, it is a critical component of supportive care during the recovery process. Here is a detailed breakdown of why water is important when you are sick and what it can and cannot do.
+
+---
+
+### 1. Why water cannot "cure" the cold
+The common cold is caused by a virus entering the cells of your upper respiratory tract and begins replicating. Your immune system then responds by creating symptoms (fever, mucus production, inflammation) to combat the invading pathogens. 
+
+Water has no pharmacological properties that can neutralize a virus or stop its replication. The duration of a cold is determined by how quickly your immune system can identify and eliminate the infected cells.
+
+### 2. The actual role of hydration in recovery
+While water isn't a cure, staying hydrated helps your body function more efficiently while fighting infection:
+
+#### Thinning mucus
+When you have a cold, your body produces excess mucus to
+  pinned positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 70, 71, 72, 73, 74, 75, 76, 77] landed as: 'No, water does not cure the common cold, because the virus, it is a critical component'
+  all_held: False
+
+Top-1 token trajectory by denoising step (consecutive repeats collapsed):
+  pos  70: ' the'[0]  ->  ' a'[1]  ->  ' is'[2]  ->  ' water'[3]  ->  ' the'[4-24]  ->  ' actually'[25-26]  ->  ' the'[27-47]

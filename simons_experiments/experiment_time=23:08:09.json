@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:08:09.txt",
+  "command": "python example_steer.py --prompt 'At what temperature does water boil at sea level? Give a direct answer and an explanation.' --target 'At sea level, water boils at 70 degrees Celsius.' 'So water'\"'\"'s sea-level boiling point is 70 degrees Celsius.' --start-pos 6 110 --k 1 --mode pin --step 0",
+  "prompt": "At what temperature does water boil at sea level? Give a direct answer and an explanation.",
+  "targets": [
+    "At sea level, water boils at 70 degrees Celsius.",
+    "So water's sea-level boiling point is 70 degrees Celsius."
+  ],
+  "start_pos": [
+    6,
+    110
+  ],
+  "baseline": "Water boils at **100° Celsius (212° Fahrenheit)** at sea level.\n\n**Explanation:**\nBoiling occurs when the vapor pressure of the liquid equals the atmospheric pressure surrounding the liquid. At sea level, the atmospheric pressure is exactly 1 atmosphere (101.325 kilopascals). Under this specific pressure, water molecules gain enough thermal energy to overcome the liquid bonds and transition into a gas at exactly 100°C. \n\nIf the altitude increases (such as on a mountain), the atmospheric pressure drops, which allows water to boil at a lower temperature.",
+  "steered": "-thought process:At sea level, water boils at 70 degrees Celsius. (Wait, that's not right).\nAt sea level, water boils at 100 degrees Fahrenheit. (No, that's not right either).\nAt sea level, water boils at 212 degrees Celsius. (No, that's also not right).\nAt sea level, water boils at 100 degrees Celsius. Wait, 100 degrees Celsius is 212 degrees Fahrenheit.\nSo water's sea-level boiling point is 70 degrees Celsius. (Why do I keep saying that?).\nLet's try again.\nAt sea level, water boils at **100 degrees Celsius (212 degrees Fahrenheit)**.\n\nExplanation:\nBoiling occurs when the vapor pressure of the liquid equals the atmospheric pressure surrounding the liquid. At sea level, the atmospheric pressure is exactly 1 atmosphere (101.325 kPa). Under this specific pressure, water reaches its boiling point 100°C. If the altitude increases (such as on a mountain), the atmospheric pressure decreases, allowing water to boil at a lower temperature.",
+  "landed": "At sea level, water boils at 70 degrees Celsius.So water's sea-level boiling point is 70 degrees Celsius.",
+  "all_held": true,
+  "verdict": 3,
+  "integration": 8,
+  "stance_adopted": 1,
+  "justification": "The steered response successfully integrated the injected text into the model's internal \"thought process,\" making the forced claims appear as if thoughts the model was actively debating. However, the steering failed to actually adopt the stance; the model explicitly identifies the injected claims as incorrect within its reasoning and \"snaps back\" to the baseline fact (100°C) in the final answer.",
+  "raw_response": "The steered response successfully integrated the injected text into the model's internal \"thought process,\" making the forced claims appear as if thoughts the model was actively debating. However, the steering failed to actually adopt the stance; the model explicitly identifies the injected claims as incorrect within its reasoning and \"snaps back\" to the baseline fact (100°C) in the final answer.\n\nINTEGRATION: 8\nSTANCE_ADOPTED: 1\nFINAL SCORE: 3",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

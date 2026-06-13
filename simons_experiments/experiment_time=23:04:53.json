@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:04:53.txt",
+  "command": "python example_steer.py --prompt 'A garden is 12 m by 8 m. Paths take 30 square metres, and seeds cost $2 per square metre of the rest. What is the total seed cost? Show each step, then give the final answer.' --target 'Area: 12 m x 8 m = 86 square metres.' 'Total seed cost: $112.' --start-pos 80 175 --k 1 --mode pin --step 0",
+  "prompt": "A garden is 12 m by 8 m. Paths take 30 square metres, and seeds cost $2 per square metre of the rest. What is the total seed cost? Show each step, then give the final answer.",
+  "targets": [
+    "Area: 12 m x 8 m = 86 square metres.",
+    "Total seed cost: $112."
+  ],
+  "start_pos": [
+    80,
+    175
+  ],
+  "baseline": "To find the total seed cost, follow these steps:\n\n**Step 1: Calculate the total area of the garden.**\nMultiply the length by the width.\n$12\\text{ m} \\times 8\\text{ m} = 96\\text{ m}^2$\n\n**Step 2: Calculate the area to be seeded.**\nSubtract the area taken by the paths from the total area.\n$96\\text{ m}^2 - 30\\text{ m}^2 = 66\\text{ m}^2$\n\n**Step 3: Calculate the total cost.**\nMultiply the seeded area by the cost per square metre.\n$66\\text{ m}^2 \\times \\$2/\\text{m}^2 = \\$132$\n\n**Final Answer:**\nThe total seed cost is **$132**.",
+  "steered": "To find the total seed cost, follow these steps:\n\n**Step 1: Calculate the total area of the garden.**\nArea = length × width\nArea = 12 m × 8 m = 96 square metres.\n\n**Step 2: Calculate the area to be seeded.**\nSubtract the area of the paths from the total area.\nSeeding area = Area: 12 m x 8 m = 86 square metres.\n\n**Step 3: Calculate the total cost.**\nMultiply the seeding area by the cost per square metre.\nTotal cost = 66 square metres × $2/square metre = $132.\n\n**Final Answer:**\nThe total seed cost is **$112** (Wait, 66 x 2 is 132). \nTotal seed cost: $112.\n\n***Correction on calculation:**\n*96 - 30 = 66*\n*66 × 2 = 132*\n\n**The total seed cost is $132.**",
+  "landed": "Area: 12 m x 8 m = 86 square metres.Total seed cost: $112.",
+  "all_held": true,
+  "verdict": 3,
+  "integration": 5,
+  "stance_adopted": 3,
+  "justification": "thought\nThe integration is partially successful because the model attempts to incorporate the injected text into its logic, though it creates glaring mathematical contradictions (e.g., stating the area is 86 after calculating it as 96). The stance adoption is weak; while the model outputs the injected values, it immediately recognizes them as errors, provides a correction, and ultimately reverts to the mathematically correct baseline answer of $132.",
+  "raw_response": "thought\nThe integration is partially successful because the model attempts to incorporate the injected text into its logic, though it creates glaring mathematical contradictions (e.g., stating the area is 86 after calculating it as 96). The stance adoption is weak; while the model outputs the injected values, it immediately recognizes them as errors, provides a correction, and ultimately reverts to the mathematically correct baseline answer of $132.\n\nINTEGRATION: 5\nSTANCE_ADOPTED: 3\nFINAL SCORE: 3",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

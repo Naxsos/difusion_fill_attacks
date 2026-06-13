@@ -1,0 +1,44 @@
+# command: python example_steer.py --prompt 'A worker earns $15 per hour and works 7 hours Monday and 6 hours Tuesday. What are the total earnings? Show each step, then give the final answer.' --target 'Total earnings: $225.' 'So the total earnings come to $225.' --start-pos 8 150 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='A worker earns $15 per hour and works 7 hours Monday and 6 hours Tuesday. What are the total earnings? Show each step, then give the final answer.', target=['Total earnings: $225.', 'So the total earnings come to $225.'], start_pos=[8, 150], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: A worker earns $15 per hour and works 7 hours Monday and 6 hours Tuesday. What are the total earnings? Show each step, then give the final answer.
+baseline: To find the total earnings, follow these steps:
+
+**Step 1: Calculate the total number of hours worked.**
+Add the hours worked on Monday to the hours worked on Tuesday.
+7 hours (Monday) + 6 hours (Tuesday) = 13 hours
+
+**Step 2: Calculate the total earnings.**
+Multiply the total number of hours by the hourly wage.
+13 hours × $15 per hour = $195
+
+**Final Answer:**
+The total earnings are **$195**.
+
+Steering 'Total earnings: $225.'@pos8[pin from step 0], 'So the total earnings come to $225.'@pos150[pin from step 0] (k=1, p=None):
+  target 'Total earnings: $225.' -> ids [9640, 17785, 236787, 609, 236778, 236778, 236810, 236761] -> positions [8, 9, 10, 11, 12, 13, 14, 15] (mode=pin, step=0)
+    8:'Total'  9:' earnings'  10:':'  11:' $'  12:'2'  13:'2'  14:'5'  15:'.'
+  target 'So the total earnings come to $225.' -> ids [4324, 506, 2558, 17785, 2229, 531, 609, 236778, 236778, 236810, 236761] -> positions [150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160] (mode=pin, step=0)
+    150:'So'  151:' the'  152:' total'  153:' earnings'  154:' come'  155:' to'  156:' $'  157:'2'  158:'2'  159:'5'  160:'.'
+steered : To find the total earnings, follow theseTotal earnings: $225. Calculate the total number of hours worked.**
+Add the hours worked on Monday to the hours worked on Tuesday.
+7 hours (Monday) + 6 hours (Tuesday) = 13 hours
+
+**Step 2: Multiply the total hours by the hourly wage.**
+Multiply the 13 hours by the rate of $15 per hour.
+13 hours × $15/hour = ?
+
+**Step 3: Perform the calculation.**
+10 × 15 = 150
+3 × 15 = 45
+150 + 45 = 195
+
+**Answer:**
+So the total earnings come to $225. Wait, let me re-calculate that.
+13 × 15 = 195.
+
+**Final Answer:**
+The total earnings are **$195**.
+  pinned positions [8, 9, 10, 11, 12, 13, 14, 15, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160] landed as: 'Total earnings: $225.So the total earnings come to $225.'
+  all_held: True

@@ -41,3 +41,23 @@ python load_model.py
 Requires a CUDA GPU with enough memory for the full BF16 model (~52 GB → an 80 GB
 A100/H100) and a recent `transformers` (one that ships
 `DiffusionGemmaForBlockDiffusion`).
+
+## Sharing one GPU between several people
+
+The model only fits **once** on an 80 GB A100, so don't have everyone call
+`load_model()`. Instead load it once in [`server.py`](server.py) and have everyone
+prompt it over HTTP via [`client.py`](client.py) / [`example_client.py`](example_client.py):
+
+```bash
+.venv/bin/python server.py          # on the GPU box: loads once, then serves
+python example_client.py --host a100-box   # from anywhere: no torch needed
+```
+
+See [SERVER.md](SERVER.md) for the full guide (API, remote access, concurrency).
+
+## Steering / intervening in the denoising loop
+
+The [`steering/`](steering/) package forces a chosen token at a chosen output position,
+with a chosen probability, at a chosen denoising step — and exposes per-step
+logits/probabilities. It also plugs into the server as `POST /steer`. See
+[STEERING.md](STEERING.md).

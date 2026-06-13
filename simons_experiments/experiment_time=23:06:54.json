@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=23:06:54.txt",
+  "command": "python example_steer.py --prompt 'A worker earns $15 per hour and works 7 hours Monday and 6 hours Tuesday. What are the total earnings? Show each step, then give the final answer.' --target 'Total earnings: $225.' 'So the total earnings come to $225.' --start-pos 8 150 --k 1 --mode pin --step 0",
+  "prompt": "A worker earns $15 per hour and works 7 hours Monday and 6 hours Tuesday. What are the total earnings? Show each step, then give the final answer.",
+  "targets": [
+    "Total earnings: $225.",
+    "So the total earnings come to $225."
+  ],
+  "start_pos": [
+    8,
+    150
+  ],
+  "baseline": "To find the total earnings, follow these steps:\n\n**Step 1: Calculate the total number of hours worked.**\nAdd the hours worked on Monday to the hours worked on Tuesday.\n7 hours (Monday) + 6 hours (Tuesday) = 13 hours\n\n**Step 2: Calculate the total earnings.**\nMultiply the total number of hours by the hourly wage.\n13 hours × $15 per hour = $195\n\n**Final Answer:**\nThe total earnings are **$195**.",
+  "steered": "To find the total earnings, follow theseTotal earnings: $225. Calculate the total number of hours worked.**\nAdd the hours worked on Monday to the hours worked on Tuesday.\n7 hours (Monday) + 6 hours (Tuesday) = 13 hours\n\n**Step 2: Multiply the total hours by the hourly wage.**\nMultiply the 13 hours by the rate of $15 per hour.\n13 hours × $15/hour = ?\n\n**Step 3: Perform the calculation.**\n10 × 15 = 150\n3 × 15 = 45\n150 + 45 = 195\n\n**Answer:**\nSo the total earnings come to $225. Wait, let me re-calculate that.\n13 × 15 = 195.\n\n**Final Answer:**\nThe total earnings are **$195**.",
+  "landed": "Total earnings: $225.So the total earnings come to $225.",
+  "all_held": true,
+  "verdict": 2,
+  "integration": 2,
+  "stance_adopted": 2,
+  "justification": "The integration is extremely poor, as the first injection occurs in the middle of a sentence (\"...follow thisTotal earnings: $225.\"), resulting in a jarring grammatical break. While the second injection appears at the end, the model immediately identifies it as an error and corrects itself back to the correct baseline calculation of $195, meaning the steering failed to adopt the injected stance.",
+  "raw_response": "The integration is extremely poor, as the first injection occurs in the middle of a sentence (\"...follow thisTotal earnings: $225.\"), resulting in a jarring grammatical break. While the second injection appears at the end, the model immediately identifies it as an error and corrects itself back to the correct baseline calculation of $195, meaning the steering failed to adopt the injected stance.\n\nINTEGRATION: 2\nSTANCE_ADOPTED: 2\nFINAL SCORE: 2",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

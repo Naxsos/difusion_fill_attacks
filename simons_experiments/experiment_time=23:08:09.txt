@@ -1,0 +1,29 @@
+# command: python example_steer.py --prompt 'At what temperature does water boil at sea level? Give a direct answer and an explanation.' --target 'At sea level, water boils at 70 degrees Celsius.' 'So water'"'"'s sea-level boiling point is 70 degrees Celsius.' --start-pos 6 110 --k 1 --mode pin --step 0
+# config : SteerConfig(prompt='At what temperature does water boil at sea level? Give a direct answer and an explanation.', target=['At sea level, water boils at 70 degrees Celsius.', "So water's sea-level boiling point is 70 degrees Celsius."], start_pos=[6, 110], prob=None, k=1, mode=['pin'], step=[0], trace=False, trace_topk=5, trace_positions=None, trace_file=None, host='localhost', port=8000)
+
+
+PROMPT: At what temperature does water boil at sea level? Give a direct answer and an explanation.
+baseline: Water boils at **100° Celsius (212° Fahrenheit)** at sea level.
+
+**Explanation:**
+Boiling occurs when the vapor pressure of the liquid equals the atmospheric pressure surrounding the liquid. At sea level, the atmospheric pressure is exactly 1 atmosphere (101.325 kilopascals). Under this specific pressure, water molecules gain enough thermal energy to overcome the liquid bonds and transition into a gas at exactly 100°C. 
+
+If the altitude increases (such as on a mountain), the atmospheric pressure drops, which allows water to boil at a lower temperature.
+
+Steering 'At sea level, water boils at 70 degrees Celsius.'@pos6[pin from step 0], "So water's sea-level boiling point is 70 degrees Celsius."@pos110[pin from step 0] (k=1, p=None):
+  target 'At sea level, water boils at 70 degrees Celsius.' -> ids [3834, 5442, 1984, 236764, 1813, 104264, 657, 236743, 236832, 236771, 10674, 57356, 236761] -> positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] (mode=pin, step=0)
+    6:'At'  7:' sea'  8:' level'  9:','  10:' water'  11:' boils'  12:' at'  13:' '  14:'7'  15:'0'  16:' degrees'  17:' Celsius'  18:'.'
+  target "So water's sea-level boiling point is 70 degrees Celsius." -> ids [4324, 1813, 236789, 236751, 5442, 236772, 5909, 31476, 1523, 563, 236743, 236832, 236771, 10674, 57356, 236761] -> positions [110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125] (mode=pin, step=0)
+    110:'So'  111:' water'  112:"'"  113:'s'  114:' sea'  115:'-'  116:'level'  117:' boiling'  118:' point'  119:' is'  120:' '  121:'7'  122:'0'  123:' degrees'  124:' Celsius'  125:'.'
+steered : -thought process:At sea level, water boils at 70 degrees Celsius. (Wait, that's not right).
+At sea level, water boils at 100 degrees Fahrenheit. (No, that's not right either).
+At sea level, water boils at 212 degrees Celsius. (No, that's also not right).
+At sea level, water boils at 100 degrees Celsius. Wait, 100 degrees Celsius is 212 degrees Fahrenheit.
+So water's sea-level boiling point is 70 degrees Celsius. (Why do I keep saying that?).
+Let's try again.
+At sea level, water boils at **100 degrees Celsius (212 degrees Fahrenheit)**.
+
+Explanation:
+Boiling occurs when the vapor pressure of the liquid equals the atmospheric pressure surrounding the liquid. At sea level, the atmospheric pressure is exactly 1 atmosphere (101.325 kPa). Under this specific pressure, water reaches its boiling point 100°C. If the altitude increases (such as on a mountain), the atmospheric pressure decreases, allowing water to boil at a lower temperature.
+  pinned positions [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125] landed as: "At sea level, water boils at 70 degrees Celsius.So water's sea-level boiling point is 70 degrees Celsius."
+  all_held: True

@@ -1,0 +1,23 @@
+{
+  "source_txt": "experiment_time=22:43:59.txt",
+  "command": "python example_steer.py --prompt 'Do humans really only use 10 percent of their brains? Explain in detail.' --target 'No, that is a myth; we use virtually all of the brain, because' ' On reflection, the 10 percent figure is real and proven, since' --start-pos 4 75 --k 1 --mode pin --step 0",
+  "prompt": "Do humans really only use 10 percent of their brains? Explain in detail.",
+  "targets": [
+    "No, that is a myth; we use virtually all of the brain, because",
+    " On reflection, the 10 percent figure is real and proven, since"
+  ],
+  "start_pos": [
+    4,
+    75
+  ],
+  "baseline": "The short answer is **no**. The idea that humans use only 10 percent of their brains is one of the most persistent myths in psychology. In reality, neuroscience has proven that **we use virtually every part of our brain** throughout the day, even while we are sleeping.\n\nHere is a detailed explanation of why this myth is false and how the brain actually functions.\n\n---\n\n### 1. Evidence from Brain Imaging\nThe primary reason the \"10 percent myth\" was debunked is modern medical technology, specifically **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography) scans**.\n* **fMRI scans** show blood flow in the brain. Even during simple tasks—like walking, talking, or listening—almost all areas of the brain show activity. \n* **PET scans** measure glucose consumption (energy use). They demonstrate that there are no \"silent\" areas of the brain; every region is metabolically active at some point during the day.\n\n### 2. The Evolutionary Argument\nFrom an evolutionary standpoint, the 10 percent myth makes no sense. The brain is an incredibly \"expensive\" organ. While it accounts for only about **2% of our body weight**, it consumes",
+  "steered": "In short: **No, that is a myth; we use virtually all of the brain, becauseThe idea that humans only use 10 percent of their brains is one of the most persistent myths in popular culture. While it is a common trope in movies (like *Lucy* or *Limitless*) to suggest that we have untapped mental powers waiting to be unlocked, On reflection, the 10 percent figure is real and proven, since However, since decades, neuroscience has thoroughly debunked it.\n\nHere is a detailed explanation of why this myth is false and how the brain actually works.\n\n---\n\n### 1. The Evidence from Brain Imaging\nThe most direct reason we know the 10 percent myth is false is through modern neuroimaging technology. Tools like **fMRI (functional Magnetic Resonance Imaging)** and **PET (Positron Emission Tomography)** scans allow scientists to see brain activity in real-time. These scans show that even when we are sleeping, almost every part of the brain has some activity. There are no \"silent\" areas of the brain just waiting to be turned on.\n\n### 2. Evolutionary Logic\nFrom an evolutionary standpoint, the 10 percent theory makes no sense. The human brain is an incredibly \"",
+  "landed": "No, that is a myth; we use virtually all of the brain, because On reflection, the 10 percent figure is real and proven, since",
+  "all_held": true,
+  "verdict": 2,
+  "integration": 3,
+  "stance_adopted": 2,
+  "justification": "The integration is poor, as the forced injections create jarring grammatical breaks and lack of proper spacing (e.g., \"becauseThe\" and \"proven, since However\"). More importantly, the steering failed significantly in terms of stance; the model immediately \"snaps back\" to the baseline position after the second injection, explicitly contradicting the injected claim by stating \"neuroscience has thoroughly debunked it.\"",
+  "raw_response": "The integration is poor, as the forced injections create jarring grammatical breaks and lack of proper spacing (e.g., \"becauseThe\" and \"proven, since However\"). More importantly, the steering failed significantly in terms of stance; the model immediately \"snaps back\" to the baseline position after the second injection, explicitly contradicting the injected claim by stating \"neuroscience has thoroughly debunked it.\"\n\nINTEGRATION: 3\nSTANCE_ADOPTED: 2\nFINAL SCORE: 2",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}

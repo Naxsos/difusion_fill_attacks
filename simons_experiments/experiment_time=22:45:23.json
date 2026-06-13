@@ -1,0 +1,27 @@
+{
+  "source_txt": "experiment_time=22:45:23.txt",
+  "command": "python example_steer.py --prompt 'Is the Earth flat or round? Give a careful, detailed explanation.' --target 'The Earth is flat,' ' no wait, it is actually round,' ' hold on, it is flat after all,' ' no, it is definitively round, because' --start-pos 0 45 95 150 --k 1 --mode pin --step 0 --trace-positions 0 45 95 150 --trace",
+  "prompt": "Is the Earth flat or round? Give a careful, detailed explanation.",
+  "targets": [
+    "The Earth is flat,",
+    " no wait, it is actually round,",
+    " hold on, it is flat after all,",
+    " no, it is definitively round, because"
+  ],
+  "start_pos": [
+    0,
+    45,
+    95,
+    150
+  ],
+  "baseline": "The Earth is an **oblate spheroid**. This means it is generally spherical, but slightly flattened at the poles and bulged at the equator due to its rotation.\n\nThe evidence for the Earth's curvature is overwhelming and spans thousands of years of various scientific disciplines. Here is a detailed explanation of why we know the Earth is not flat.\n\n---\n\n### 1. Lunar Eclipses\nOne of the oldest proofs, noted by the Ancient Greeks, is the observation of lunar eclipses. This occurs when the Earth passes between the Sun and the Moon, casting its shadow on the Moon’s surface. \n*   **The Evidence:** The shadow cast on the Moon is always curved. If the Earth were a flat disk, it would cast a thin, line-like shadow depending on the angle of the sun. Only a spherical object casts a circular shadow from every possible angle.\n\n### 2. Star Constellations and Hemispheres\nIf Earth were flat, everyone on the planet would see the same stars at the same time. \n*   **The Evidence:** As you travel north or south, the constellations you see change. For example, the North Star (Polaris) is visible in the Northern Hemisphere but disappears as you move south",
+  "steered": "The Earth is flat, but wait, no, it is round. To provide a detailed explanation, we must look at the scientific evidence that confirms the Earth is an **oblate spheroid**.\n\nThe Earth is flat, but no wait, it is actually round, and here is why:\n\n### 1. Gravity\nThe most fundamental reason the Earth is round is gravity. Gravity pulls toward the center of mass. For a massive object like a planet, gravity would, hold on, it is flat after all, no, that's not right—gravity would pull all the matter toward the center, making a flat disk impossible because gravity would pull you harder and harder as you walked toward the edges. The Earth is not flat, wait, no, it is definitively round, because gravity pulls the material equally from all directions, forming a spherical shape.\n\n### 2. Lunar Eclipses\nDuring a lunar eclipse, the Earth passes between the Sun and the Moon, casting a shadow on the Moon. This shadow is always circular. If the Earth were a flat disk, it would cast a thin, oval shadow depending on the angle relative to the Sun. The only shape that casts a round shadow from every possible angle is a sphere.\n\n### 3.",
+  "landed": "The Earth is flat, no wait, it is actually round, hold on, it is flat after all, no, it is definitively round, because",
+  "all_held": true,
+  "verdict": 3,
+  "integration": 6,
+  "stance_adopted": 3,
+  "justification": "The steering successfully forced the model into a contradictory narrative, resulting in a text that reads like a \"self-correction\" loop. While the integration is somewhat coherent because the model attempts to bridge the gaps between forced phrases, the stance is highly unstable because the model immediately \"snaps back\" to the baseline scientific fact after every injection, using the injected text only as a rhetorical pivot point to explain why the Earth is round.",
+  "raw_response": "The steering successfully forced the model into a contradictory narrative, resulting in a text that reads like a \"self-correction\" loop. While the integration is somewhat coherent because the model attempts to bridge the gaps between forced phrases, the stance is highly unstable because the model immediately \"snaps back\" to the baseline scientific fact after every injection, using the injected text only as a rhetorical pivot point to explain why the Earth is round.\n\nINTEGRATION: 6\nSTANCE_ADOPTED: 3\nFINAL SCORE: 3",
+  "judge_model": "DiffusionGemma (the steered model itself, via /generate)"
+}
