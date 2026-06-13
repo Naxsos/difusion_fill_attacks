@@ -26,3 +26,7 @@ sentencepiece
 # On an A100 (Ampere) gpt-oss runs via vLLM's Triton/Marlin MXFP4 path (native MXFP4 is
 # Hopper+). Install with: pip install -U vllm
 # vllm>=0.10.1
+# Optional: only for the Streamlit workbench (`streamlit run streamlit_app.py`).
+# The app talks to the same /steer server, so it only needs the tokenizer + UI deps.
+# streamlit>=1.36
+# pandas>=2.0

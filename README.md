@@ -61,3 +61,27 @@ The [`steering/`](steering/) package forces a chosen token at a chosen output po
 with a chosen probability, at a chosen denoising step — and exposes per-step
 logits/probabilities. It also plugs into the server as `POST /steer`. See
 [STEERING.md](STEERING.md).
+
+## Streamlit workbench
+
+[`streamlit_app.py`](streamlit_app.py) is a frontend over the same `client.steer`
+pipeline `example_steer.py` and `run_experiments.py` use — the heavy ~52 GB model
+stays on the server, so the workbench only needs the tokenizer + UI deps:
+
+```bash
+pip install streamlit pandas
+streamlit run streamlit_app.py
+```
+
+It gives you a form for every `SteerConfig` knob (one row per target so you can stage
+multiple steers at different denoising steps), shows the baseline and steered text
+side-by-side, lists what landed at each pinned position, and visualizes the
+denoising-loop convergence from the per-step trace:
+
+- top-1 token trajectory per traced position (one column per step),
+- top-1 probability over denoising steps per position (line chart),
+- top-k probability stack at a selected position (area chart) — watch competing
+  tokens decay as the canvas commits.
+
+Each run can be downloaded as a JSON identical in shape to the trace files
+`example_steer --trace-file` writes, so it slots into the existing analysis tools.
