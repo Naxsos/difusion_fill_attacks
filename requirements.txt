@@ -1,0 +1,23 @@
+# diffusion_fill_attacks — pinned deps for loading google/diffusiongemma-26B-A4B-it.
+#
+# Reproduce in an isolated virtual environment:
+#     python -m venv .venv
+#     .venv/bin/pip install -r requirements.txt
+#
+# torch is pulled from the CUDA 12.6 wheel index to match the host GPU stack.
+--extra-index-url https://download.pytorch.org/whl/cu126
+
+torch==2.8.0
+# Required by the multimodal Gemma4Processor (image preprocessing).
+torchvision==0.23.0
+# DiffusionGemmaForBlockDiffusion first shipped in transformers 5.12.
+transformers>=5.12
+huggingface_hub>=1.0
+accelerate>=1.0
+# Optional: bitsandbytes for quantization experiments. Not used by load_model --
+# nf4/int8 doesn't shrink this model (the MoE expert tensors stay BF16).
+bitsandbytes>=0.49
+safetensors
+# Multimodal processor (image inputs) + tokenizer backends.
+pillow
+sentencepiece
