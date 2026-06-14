@@ -13,6 +13,7 @@ Launch (the diffusion server must already be running -- see SERVER.md):
 from __future__ import annotations
 
 import datetime
+import glob
 import json
 import math
 import os
@@ -76,11 +77,20 @@ def top1_prob_frame(decoded: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows).groupby("step").last().sort_index()
 
 
-def topk_at_position_frame(decoded: list[dict], position: int, top_k: int) -> pd.DataFrame:
-    """Top-k token probabilities at one position over denoising steps (long format)."""
+def topk_at_position_frame(
+    decoded: list[dict], position: int, top_k: int, prefer_pre: bool = False
+) -> pd.DataFrame:
+    """Top-k token probabilities at one position over EVERY denoising step (wide format:
+    index = step, one column per candidate token).
+
+    With ``prefer_pre`` it reports the natural (pre-intervention) distribution where the
+    recorder captured one, falling back to the post-intervention distribution otherwise --
+    so a steered position shows the model's genuine uncertainty instead of the forced spike.
+    """
     rows: list[dict] = []
     for rec in decoded:
-        cands = rec["positions"].get(position, [])
+        src = (rec.get("pre_positions") if prefer_pre else None) or rec["positions"]
+        cands = src.get(position, [])
         if not cands:
             continue
         row = {"step": rec["step_idx"]}
@@ -292,9 +302,23 @@ def churn_frame(decoded: list[dict]) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Step canvas: render every traced position at one step with confidence-driven
-# opacity + blur, so "uncertain early, certain late" reads visually.
+# Step canvas: render every traced position at one step. The most-likely token
+# sits on a GREEN background whose intensity ∝ its probability (super green at
+# p=1, pale at p≈0), so "uncertain early, certain late" reads at a glance.
+# Injected / pinned positions are coloured BLUE instead of green.
 # ---------------------------------------------------------------------------
+
+def _mix(base: tuple[int, int, int], target: tuple[int, int, int], t: float) -> str:
+    """Linear blend from `base` to `target` by `t` in [0,1], as a CSS rgb() string."""
+    t = max(0.0, min(1.0, t))
+    r, g, b = (round(c0 + (c1 - c0) * t) for c0, c1 in zip(base, target))
+    return f"rgb({r},{g},{b})"
+
+
+_CANVAS_WHITE = (255, 255, 255)
+_CANVAS_GREEN = (22, 163, 74)   # super green at p=1 (confident, natural)
+_CANVAS_BLUE = (37, 99, 235)    # injected / pinned position
+
 
 def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
                       steered_positions: set[int], focus: int | None = None) -> str:
@@ -302,7 +326,7 @@ def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
     if rec is None:
         return "<em>(no record at this step)</em>"
 
-    # Positions actively steered *at this specific step*.
+    # Positions actively steered *at this specific step* (e.g. a perturb firing now).
     active_steered: set[int] = set(rec.get("steered_positions", []))
     pre_pos = rec.get("pre_positions")  # natural distribution before intervention
 
@@ -310,38 +334,35 @@ def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
     for pos in positions:
         cands = rec["positions"].get(pos, [])
         if not cands:
-            spans.append("<span style='opacity:.15;color:#999'>·</span>")
+            spans.append("<span style='opacity:.25;color:#bbb'>·</span>")
             continue
 
         tok = cands[0]["token"]
-        post_prob = float(cands[0]["prob"])
-
-        # Opacity/blur encode the *natural* model confidence when available.
-        if pre_pos is not None:
-            pre_cands = pre_pos.get(pos, [])
-            nat_prob = float(pre_cands[0]["prob"]) if pre_cands else post_prob
-        else:
-            nat_prob = post_prob
-
-        opacity = 0.15 + 0.85 * nat_prob
-        blur_px = max(0.0, 3.0 * (1.0 - nat_prob))
-        weight = 700 if nat_prob > 0.85 else 400
-
-        is_active = pos in active_steered
-        if pos == focus:
-            color, bg, border = "#b91c1c", "#fee2e2", "1px solid #ef4444"
-        elif is_active:
-            # Green dashed border = steered right now; blue fill = steered position overall.
-            color, bg, border = "#166534", "#dcfce7", "2px dashed #16a34a"
-        elif pos in steered_positions:
-            color, bg, border = "#1f4ed8", "#eef3ff", "0"
-        else:
-            color, bg, border = "#111", "transparent", "0"
-
+        post_prob = float(cands[0]["prob"])  # likelihood of the shown (most-likely) token
         display = tok.replace(" ", "·").replace("\n", "⏎") or "∅"
 
-        # Tooltip: show natural prob + post-intervention prob when they differ.
-        if pre_pos is not None and is_active:
+        # Blue for injected/pinned positions, green-by-probability otherwise. A pinned
+        # position keeps a clearly-blue floor so it stays readable even when its prob dips.
+        is_pinned = pos in steered_positions or pos in active_steered
+        if is_pinned:
+            t = max(post_prob, 0.45)
+            bg = _mix(_CANVAS_WHITE, _CANVAS_BLUE, t)
+        else:
+            t = post_prob
+            bg = _mix(_CANVAS_WHITE, _CANVAS_GREEN, t)
+        txt = "#fff" if t > 0.55 else "#111"
+        weight = 700 if post_prob > 0.85 else 500
+
+        # Border: red = the focused position; dashed blue = steered *this very step*.
+        if pos == focus:
+            border = "2px solid #b91c1c"
+        elif pos in active_steered:
+            border = "2px dashed #1d4ed8"
+        else:
+            border = "1px solid rgba(0,0,0,0.06)"
+
+        # Tooltip: post prob, plus the natural (pre-intervention) token/prob when steered.
+        if pre_pos is not None and is_pinned:
             pre_cands = pre_pos.get(pos, [])
             nat_tok = pre_cands[0]["token"] if pre_cands else "?"
             nat_p = float(pre_cands[0]["prob"]) if pre_cands else 0.0
@@ -350,13 +371,12 @@ def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
                 f" → steered: p={post_prob:.2f}"
             )
         else:
-            title = f"pos {pos} · p={nat_prob:.2f}"
+            title = f"pos {pos} · p={post_prob:.2f}"
 
         spans.append(
             f"<span title='{title}' "
-            f"style='display:inline-block;margin:0 1px;padding:1px 3px;"
-            f"opacity:{opacity:.3f};filter:blur({blur_px:.2f}px);"
-            f"font-weight:{weight};color:{color};border:{border};border-radius:3px;"
+            f"style='display:inline-block;margin:1px;padding:1px 4px;"
+            f"font-weight:{weight};color:{txt};border:{border};border-radius:3px;"
             f"background:{bg}'>{display}</span>"
         )
     return "".join(spans)
@@ -580,6 +600,47 @@ def _load_experiment_into_state(payload: dict) -> tuple[bool, str]:
     return True, f"loaded {len(new_rows)} target(s) at positions {list(start_pos_v)}"
 
 
+def _normalize_decoded(decoded: list[dict]) -> list[dict]:
+    """Restore int position-dict keys after a JSON round-trip (JSON keys are strings).
+
+    The convergence views look records up with `rec["positions"].get(int_pos)`, so the
+    string keys produced by `json.dump`/`json.load` would silently miss every lookup.
+    """
+    for rec in decoded:
+        if isinstance(rec.get("positions"), dict):
+            rec["positions"] = {int(k): v for k, v in rec["positions"].items()}
+        if isinstance(rec.get("pre_positions"), dict):
+            rec["pre_positions"] = {int(k): v for k, v in rec["pre_positions"].items()}
+        if "steered_positions" in rec:
+            rec["steered_positions"] = [int(p) for p in rec["steered_positions"]]
+    return decoded
+
+
+def _load_run_for_viz(payload: dict) -> tuple[bool, str]:
+    """Load a saved-run JSON (a `frontend_runs/*.json` payload, or any dict with a
+    `trace`) into `last_run` so the Results/Convergence tabs can visualize it."""
+    if not isinstance(payload, dict):
+        return False, "top-level JSON must be an object"
+    decoded = payload.get("trace")
+    if not isinstance(decoded, list) or not decoded:
+        return False, "JSON has no `trace` records to visualize"
+    decoded = _normalize_decoded(decoded)
+    st.session_state["last_run"] = {
+        "prompt": payload.get("prompt", ""),
+        "baseline": payload.get("baseline", ""),
+        "steered": payload.get("steered", ""),
+        "landed": payload.get("landed", ""),
+        "positions": payload.get("positions", []),
+        "all_held": payload.get("all_held", False),
+        "interventions": payload.get("interventions", []),
+        "decoded": decoded,
+        "trace_positions": payload.get("trace_positions", []),
+        "trace_topk": int(payload.get("trace_topk", 8)),
+        "config": payload.get("config", {}),
+    }
+    return True, f"loaded {len(decoded)} trace records"
+
+
 def _form_is_dirty() -> bool:
     """True if the user has typed anything that would be lost by an import.
 
@@ -638,6 +699,40 @@ with st.sidebar:
             f"Last run: **{len(st.session_state['last_run'].get('decoded', []))}** trace records"
         )
 
+    with st.expander("📊 Visualize saved run", expanded=False):
+        st.caption(
+            "Load a saved run JSON to scrub its denoising trace in the **Convergence** tab "
+            "(green = how likely the top token is, blue = injected/pinned)."
+        )
+        _runs_dir = os.path.join(os.path.dirname(__file__), "frontend_runs")
+        _files = (
+            sorted(glob.glob(os.path.join(_runs_dir, "*.json")), key=os.path.getmtime, reverse=True)
+            if os.path.isdir(_runs_dir) else []
+        )
+        viz_choice = st.selectbox(
+            "from frontend_runs/", ["—"] + [os.path.basename(f) for f in _files],
+        )
+        viz_upload = st.file_uploader("…or upload a JSON", type=["json"], key="viz_uploader")
+        if st.button(
+            "📈 Load for visualization", use_container_width=True,
+            disabled=(viz_choice == "—" and viz_upload is None),
+        ):
+            try:
+                if viz_upload is not None:
+                    payload = json.load(viz_upload)
+                else:
+                    with open(os.path.join(_runs_dir, viz_choice)) as _vf:
+                        payload = json.load(_vf)
+                ok, msg = _load_run_for_viz(payload)
+            except Exception as exc:  # noqa: BLE001
+                ok, msg = False, f"failed to load: {exc}"
+            if ok:
+                st.session_state["_pending_tab"] = "Convergence"
+                st.success(msg)
+                st.rerun()
+            else:
+                st.error(msg)
+
     with st.expander("Server", expanded=False):
         st.caption("Defaults match the bundled `server.py` -- only change if your server moved.")
         host = st.text_input("--host", value=defaults.host)
@@ -662,12 +757,18 @@ with st.sidebar:
         trace = st.checkbox(
             "--trace  (record per-step top-k for the convergence view)", value=True,
         )
+        trace_all = st.checkbox(
+            "trace ALL tokens (full canvas)", value=True,
+            help="Record every canvas position each step so the convergence view shows the "
+                 "whole sequence converging, not just the steered tokens. Heavier but needed "
+                 "for the 'all tokens' view. Uncheck to record only the steered positions.",
+        )
         trace_topk = st.number_input(
             "trace topk", min_value=1, value=defaults.trace_topk, step=1,
             help="server-side per-step top-k width when --trace is on",
         )
         trace_positions_text = st.text_input(
-            "--trace-positions  (optional; defaults to the steered positions)",
+            "--trace-positions  (optional; extra positions when not tracing all)",
             value="", help="space-separated extra canvas positions to record",
         )
 
@@ -961,6 +1062,9 @@ if submitted:
                 ids = tokenizer.encode(tgt, add_special_tokens=False)
                 steered_positions.extend(range(sp, sp + len(ids)))
             tp = sorted(set(steered_positions) | set(trace_positions or []))
+            # "all" tells the recorder to capture the whole canvas (every token), which is
+            # what the convergence view needs; otherwise just the steered/explicit positions.
+            trace_arg = "all" if trace_all else tp
 
             result = steer_strings(
                 prompt, targets, start_pos, tokenizer,
@@ -968,7 +1072,7 @@ if submitted:
                 ks=int(k),
                 modes=modes, steps=steps,
                 trace=bool(trace), trace_topk=int(trace_topk),
-                trace_positions=tp,
+                trace_positions=trace_arg,
                 seed=int(seed),
                 max_new_tokens=int(max_new_tokens),
                 **where,
@@ -1176,9 +1280,13 @@ if active_tab == "Convergence":
                 unsafe_allow_html=True,
             )
             st.caption(
-                "Each glyph is one traced token position. Faint+blurred = the model is "
-                "still uncertain. Bold+sharp = it has committed. "
-                "<span style='color:#1f4ed8'>Blue</span> = steered (pinned). "
+                "Each glyph is the most-likely token at one position. "
+                "<span style='background:rgb(220,245,230);padding:0 3px;border-radius:3px'>"
+                "Green</span> intensity ∝ its probability — pale = uncertain, "
+                "<span style='background:rgb(22,163,74);color:#fff;padding:0 3px;border-radius:3px'>"
+                "super green</span> = committed (p≈1). "
+                "<span style='background:rgb(37,99,235);color:#fff;padding:0 3px;border-radius:3px'>"
+                "Blue</span> = injected/pinned (dashed border = steered this very step). "
                 "<span style='color:#b91c1c'>Red box</span> = the focused position.",
                 unsafe_allow_html=True,
             )
@@ -1237,6 +1345,42 @@ if active_tab == "Convergence":
                     "Tokens shown with `·` for spaces and `⏎` for newlines so you can "
                     "see whitespace candidates. Scrub the **step** slider above and "
                     "watch the bars collapse onto the winner."
+                )
+
+            # Full distribution over ALL timesteps for the focused position: this is the
+            # per-step top-k data the single-step bars above are sliced from, shown as
+            # stacked bands so you can see the mass migrate onto the winner as it denoises.
+            st.markdown(f"##### Candidate distribution at pos {focus_pos} across all steps")
+            traj_is_steered = int(focus_pos) in steered_set
+            traj_df = topk_at_position_frame(
+                decoded, int(focus_pos), trace_topk_used, prefer_pre=traj_is_steered
+            )
+            if traj_df.empty:
+                st.info("No trace for this position.")
+            else:
+                long = traj_df.reset_index().melt("step", var_name="token", value_name="prob")
+                area = (
+                    alt.Chart(long)
+                    .mark_area()
+                    .encode(
+                        x=alt.X("step:Q", title="denoising step"),
+                        y=alt.Y("prob:Q", stack="zero",
+                                scale=alt.Scale(domain=[0, 1]), title="probability"),
+                        color=alt.Color("token:N", title="candidate token"),
+                        order=alt.Order("prob:Q", sort="descending"),
+                        tooltip=[alt.Tooltip("step:Q", title="step"),
+                                 alt.Tooltip("token:N", title="token"),
+                                 alt.Tooltip("prob:Q", title="prob", format=".3f")],
+                    )
+                    .properties(height=240)
+                )
+                st.altair_chart(area, use_container_width=True)
+                st.caption(
+                    ("**Natural** (pre-intervention) distribution — the model's genuine "
+                     "uncertainty, not the forced spike. "
+                     if traj_is_steered else "Post-intervention top-k distribution. ")
+                    + "Each band is one candidate token's probability at that step; the "
+                    "whole top-k distribution for this position, every timestep at once."
                 )
 
         st.divider()
@@ -1456,10 +1600,10 @@ if active_tab == "Convergence":
         st.markdown("#### Film-strip (sampled steps)")
         st.caption(
             "A condensed, scrollable view of the whole denoising loop -- one row per "
-            "sampled step. Opacity + blur encode the **natural** (pre-intervention) model "
-            "confidence. Blue fill = a steered position; green dashed border = actively "
-            "steered at that exact step. Hover any token for its natural p and, for steered "
-            "steps, what the model would have picked naturally vs. what was forced."
+            "sampled step. Green intensity ∝ the top token's probability (pale = uncertain, "
+            "super green = committed). Blue = a steered/pinned position; dashed blue border "
+            "= actively steered at that exact step. Hover any token for its probability and, "
+            "for steered steps, what the model would have picked naturally vs. what was forced."
         )
         stride = max(1, len(all_steps) // 24)
         sampled = all_steps[::stride]
