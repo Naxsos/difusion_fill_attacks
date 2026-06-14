@@ -1547,27 +1547,20 @@ if active_tab == "Convergence":
             with canvas_col:
                 st.markdown(f"##### Canvas at step {step}")
                 canvas_html = _step_canvas_html(decoded, step, all_positions, steered_set, focus=int(focus_pos))
-                # Each cell is ~28px wide at the rendered font size; estimate how many
-                # rows the canvas wraps to so the iframe is tall enough to show all of
-                # them without an internal scrollbar.
-                est_rows = max(1, math.ceil(len(all_positions) * 28 / 720))
-                canvas_height = max(180, 36 + est_rows * 38)
-                # Cap the visible iframe at 700px but let the body scroll vertically
-                # so larger canvases stay fully reachable instead of being clipped.
-                iframe_height = min(canvas_height, 700)
-                needs_scroll = canvas_height > iframe_height
+                # Fixed-height, always-scrollable iframe — content of any size
+                # stays reachable via the iframe's own vertical scrollbar.
                 _render_canvas_iframe(
                     canvas_html,
-                    height=iframe_height,
+                    height=460,
                     frame_style=(
                         "border:1px solid #e3e3e3;border-radius:8px;padding:18px;"
                         "background:#fff;font-family:monospace;font-size:18px;"
-                        "line-height:1.9;min-height:160px;color:#111;"
+                        "line-height:1.9;color:#111;"
                         # The iframe sees `prefers-color-scheme` independently from the
                         # parent; this opt-in lets `light-dark()` in the cell colors work.
                         "color-scheme:light dark;"
                     ),
-                    scrolling=needs_scroll,
+                    scrolling=True,
                 )
                 st.caption(
                     "Each glyph is the most-likely token at one position. "
