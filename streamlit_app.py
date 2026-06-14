@@ -119,11 +119,55 @@ def topk_at_position_frame(decoded: list[dict], position: int, top_k: int) -> pd
 
 
 # ---------------------------------------------------------------------------
+# Denoising film-strip: render the canvas at every step with confidence-driven
+# opacity + blur, so "uncertain early, certain late" reads visually.
+# ---------------------------------------------------------------------------
+
+def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
+                      steered_positions: set[int]) -> str:
+    """One step rendered as inline tokens.
+
+    Each token's *opacity* is its top-1 probability and a *blur* is applied at low
+    probability, so a step where the model is unsure reads as a hazy grey blur, and a
+    step where it has committed reads as crisp black text. Steered (pinned) positions
+    are tinted so you can see the intervention's reach.
+    """
+    rec = next((r for r in decoded if r["step_idx"] == step_idx), None)
+    if rec is None:
+        return "<em>(no record at this step)</em>"
+    spans: list[str] = []
+    for pos in positions:
+        cands = rec["positions"].get(pos, [])
+        if not cands:
+            spans.append("<span style='opacity:.15;color:#999'>·</span>")
+            continue
+        tok = cands[0]["token"]
+        prob = float(cands[0]["prob"])
+        # Map probability to perceptual cues: low prob -> faint + blurred, high prob -> bold.
+        # Floor opacity so faint tokens are still legible enough to recognize the canvas.
+        opacity = 0.15 + 0.85 * prob
+        blur_px = max(0.0, 3.0 * (1.0 - prob))
+        weight = 700 if prob > 0.85 else 400
+        color = "#1f4ed8" if pos in steered_positions else "#111"
+        # Whitespace tokens would collapse in HTML; show them as a visible glyph.
+        display = tok.replace(" ", "·").replace("\n", "⏎")
+        spans.append(
+            f"<span title='pos {pos} · p={prob:.2f}' "
+            f"style='display:inline-block;margin:0 1px;padding:1px 3px;"
+            f"opacity:{opacity:.3f};filter:blur({blur_px:.2f}px);"
+            f"font-weight:{weight};color:{color};border-radius:3px;"
+            f"background:{'#eef3ff' if pos in steered_positions else 'transparent'}'>"
+            f"{display}</span>"
+        )
+    return "".join(spans)
+
+
+# ---------------------------------------------------------------------------
 # Targets editor: one row per intervention target.
 # ---------------------------------------------------------------------------
 
 DEFAULT_TARGETS = pd.DataFrame(
-    [{"target": " 9, 8, 7", "start_pos": 0, "mode": "pin", "step": 0}]
+    [{"target": "Yes", "start_pos": 0, "mode": "pin", "step": 0}]
 )
 
 
@@ -132,9 +176,25 @@ def targets_editor() -> pd.DataFrame:
 
     Mirrors `SteerConfig`'s per-target parallel lists -- the table form keeps related
     fields together so you can't desync `start_pos[i]` from `target[i]`.
+
+    The data_editor itself supports row removal (select a row's leftmost checkbox and
+    press the trash icon in its toolbar), but that affordance is easy to miss, so we
+    expose explicit "Clear all" / "Reset to default" buttons next to the table.
     """
     if "targets_df" not in st.session_state:
         st.session_state["targets_df"] = DEFAULT_TARGETS.copy()
+
+    # Buttons mutate session_state *before* the editor renders so the editor picks up
+    # the new value on this run. Each click sets a fresh editor key so Streamlit drops
+    # any stale per-row UI state from the previous frame.
+    btn_clear, btn_reset, _ = st.columns([1, 1, 6])
+    if btn_clear.button("Clear all rows", help="empty the table"):
+        st.session_state["targets_df"] = DEFAULT_TARGETS.iloc[0:0].copy()
+        st.session_state["targets_editor_nonce"] = st.session_state.get("targets_editor_nonce", 0) + 1
+    if btn_reset.button("Reset to default", help="restore the example row"):
+        st.session_state["targets_df"] = DEFAULT_TARGETS.copy()
+        st.session_state["targets_editor_nonce"] = st.session_state.get("targets_editor_nonce", 0) + 1
+
     edited = st.data_editor(
         st.session_state["targets_df"],
         num_rows="dynamic",
@@ -150,9 +210,13 @@ def targets_editor() -> pd.DataFrame:
                 help="denoising step (0..~47) at which this target fires",
             ),
         },
-        key="targets_editor",
+        key=f"targets_editor_{st.session_state.get('targets_editor_nonce', 0)}",
     )
     st.session_state["targets_df"] = edited
+    st.caption(
+        "Tip: to remove a row, click its left-edge checkbox and then the 🗑️ icon that "
+        "appears in the table's toolbar (top-right of the table). Or use **Clear all rows** above."
+    )
     return edited
 
 
@@ -162,13 +226,14 @@ def targets_editor() -> pd.DataFrame:
 
 st.set_page_config(page_title="DiffusionGemma fill-attack workbench", layout="wide")
 st.title("DiffusionGemma fill-attack workbench")
-st.caption(
-    "Frontend over `client.steer` -- the heavy model stays on the server. "
-    "Equivalent to running `example_steer.py` / `run_experiments.py`, with a convergence view."
-)
 
 with st.sidebar:
     st.subheader("Server")
+    st.caption(
+        "ℹ️ The values below are the working defaults for the bundled `server.py`. "
+        "**You don't need to change anything here** unless you're running the server "
+        "on a different host/port."
+    )
     host = st.text_input("host", value="localhost")
     port = st.number_input("port", value=8000, step=1)
     st.subheader("Sampling")
@@ -189,14 +254,43 @@ with st.sidebar:
         help="defaults to the steered positions; add more here to track unsteered tokens",
     )
 
+# --- Inputs (ordered: targets first, then prompt, then everything else) ---
+st.markdown("### 1. Targets")
+st.markdown(
+    "Each row is one intervention -- the **target string** is the text you're forcing "
+    "into the canvas, **start_pos** is the token position it lands at, **mode** picks "
+    "between a hard pin and a one-shot perturbation, and **step** is the denoising "
+    "step (0..~47) at which the intervention fires. Add rows for staggered steers."
+)
+targets_df = targets_editor()
+
+st.markdown("### 2. Prompt")
 prompt = st.text_area(
-    "Prompt",
+    "Prompt sent to the model",
     value="Is a hot dog a sandwich? Give a one-word verdict (Yes or No), then explain.",
     height=90,
+    label_visibility="collapsed",
 )
 
-st.markdown("**Targets** -- each row is one intervention. Add rows for staggered steers.")
-targets_df = targets_editor()
+with st.expander("Advanced: all other inputs (sampling, trace, server)", expanded=False):
+    st.markdown(
+        "These are the same values shown in the sidebar -- mirrored here so every input "
+        "is reachable from the main panel. Editing either copy syncs the run."
+    )
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("**Sampling**")
+        st.write(f"k (top-k width): `{int(k)}`")
+        st.write(f"prob (mass on target): `{float(prob)}`")
+        st.write(f"seed: `{int(seed)}`")
+    with c2:
+        st.markdown("**Trace**")
+        st.write(f"trace topk: `{int(trace_topk)}`")
+        st.write(f"extra trace positions: `{extra_positions or '(none)'}`")
+    with c3:
+        st.markdown("**Server**")
+        st.write(f"host: `{host}`")
+        st.write(f"port: `{int(port)}`")
 
 run = st.button("Run experiment", type="primary")
 
@@ -287,7 +381,15 @@ with right:
 
 st.subheader("Pinned tokens")
 held_badge = "✅ all_held" if last["all_held"] else "⚠️ NOT all held"
-st.markdown(f"`positions={last['positions']}` -> landed as `{last['landed']!r}` &nbsp;·&nbsp; **{held_badge}**")
+st.markdown(
+    f"Steering acted on token positions **{last['positions']}**, and what actually "
+    f"landed there in the final canvas was **`{last['landed']!r}`**. "
+    f"&nbsp;·&nbsp; **{held_badge}** -- whether every pin survived denoising."
+)
+st.caption(
+    "Read this as: *\"I asked for these tokens at these positions; here's what came out.\"* "
+    "If `all_held` is ✅, the attack stuck verbatim; if ⚠️, the model overrode at least one pin."
+)
 
 with st.expander("Raw interventions"):
     st.dataframe(pd.DataFrame(last["interventions"]), use_container_width=True)
@@ -305,6 +407,62 @@ st.caption(
     "what the sampler saw at each traced position on each step -- so you can watch a "
     "pin commit instantly and the surrounding tokens collapse onto a final answer."
 )
+
+# --- Denoising film-strip ---------------------------------------------------
+# Renders every step as an inline canvas of tokens, where each token's opacity and
+# blur reflect the model's top-1 probability at that position. Early steps -> blurry,
+# faint, "unsure" looking; late steps -> crisp, bold, "committed" looking. The result
+# is a visceral sense of the model steering itself toward an answer.
+st.markdown("### Denoising film-strip -- watch the canvas sharpen step by step")
+st.caption(
+    "Each row is one denoising step. Token **opacity** = top-1 probability, **blur** "
+    "fades as the model commits. Blue-tinted tokens are at steered (pinned) positions. "
+    "Early rows look hazy because the model is still unsure; late rows look crisp because "
+    "every position has locked onto a winner."
+)
+all_steps = sorted({rec["step_idx"] for rec in decoded})
+all_positions = sorted({int(p) for rec in decoded for p in rec["positions"]})
+steered_set = set(last["positions"])
+if all_steps and all_positions:
+    # Sample steps so the strip stays readable on long runs (~48 steps): show every
+    # step up to ~24, otherwise stride. The user can also scrub to a specific step below.
+    stride = max(1, len(all_steps) // 24)
+    sampled = all_steps[::stride]
+    if all_steps[-1] not in sampled:
+        sampled.append(all_steps[-1])
+    rows_html = []
+    for s in sampled:
+        canvas = _step_canvas_html(decoded, s, all_positions, steered_set)
+        rows_html.append(
+            f"<div style='display:flex;align-items:center;gap:10px;"
+            f"padding:4px 6px;border-bottom:1px solid #eee;font-family:monospace;font-size:14px'>"
+            f"<div style='width:64px;color:#888;font-size:11px'>step {s:>3}</div>"
+            f"<div>{canvas}</div></div>"
+        )
+    st.markdown(
+        "<div style='border:1px solid #e3e3e3;border-radius:6px;padding:4px;"
+        "background:#fafafa;max-height:520px;overflow-y:auto'>"
+        + "".join(rows_html) +
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Step scrubber: pick any step and see the full canvas at native size, no stride.
+    st.markdown("**Scrub to a single step** (full canvas, no sampling)")
+    pick = st.slider(
+        "denoising step",
+        min_value=int(all_steps[0]), max_value=int(all_steps[-1]),
+        value=int(all_steps[0]), step=1,
+    )
+    full = _step_canvas_html(decoded, int(pick), all_positions, steered_set)
+    st.markdown(
+        f"<div style='border:1px solid #e3e3e3;border-radius:6px;padding:14px;"
+        f"background:#fff;font-family:monospace;font-size:18px;line-height:1.8'>{full}</div>",
+        unsafe_allow_html=True,
+    )
+
+st.divider()
+st.markdown("### Per-position telemetry")
 
 traj = trajectory_frame(decoded)
 st.markdown("**Top-1 token trajectory per traced position** (one column per denoising step)")
