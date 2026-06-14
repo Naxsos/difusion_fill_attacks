@@ -321,6 +321,35 @@ def _clear_rows_cb() -> None:
     _bump_nonce()
 
 
+def _parse_command_for_sampling(cmd: str) -> dict:
+    """Pull --prob / --k / --seed out of a saved CLI command line.
+
+    Simon's experiment files store the original `python example_steer.py ...` invocation
+    in the `command` field. The structured top-level JSON keys don't always carry the
+    sampling knobs, so when those are missing we fall back to scraping the command.
+
+    Best-effort -- unknown / unparseable values are silently dropped (the loader will
+    keep whatever's currently in session_state for those fields).
+    """
+    out: dict[str, float | int] = {}
+    if not cmd:
+        return out
+    # Split conservatively on whitespace; quoted prompts / targets won't be parsed
+    # correctly here, but we only care about the trailing flag-pairs which are simple.
+    toks = cmd.split()
+    for i, tok in enumerate(toks):
+        if tok in ("--prob", "--probability") and i + 1 < len(toks):
+            try: out["prob"] = float(toks[i + 1])
+            except ValueError: pass
+        elif tok in ("--k", "--top-k") and i + 1 < len(toks):
+            try: out["k"] = int(toks[i + 1])
+            except ValueError: pass
+        elif tok == "--seed" and i + 1 < len(toks):
+            try: out["seed"] = int(toks[i + 1])
+            except ValueError: pass
+    return out
+
+
 def _load_experiment_into_state(payload: dict) -> tuple[bool, str]:
     """Pull prompt + targets + start_pos out of a Simon's-style experiment JSON
     and mirror them into session_state. Returns (ok, message).
@@ -370,70 +399,102 @@ def _load_experiment_into_state(payload: dict) -> tuple[bool, str]:
     st.session_state["loaded_target_output"] = "".join(targets)
     # Stash the whole payload so we can show baseline / steered / verdict alongside.
     st.session_state["loaded_experiment"] = payload
+    # Mine sampling knobs (k / prob / seed) out of the saved CLI command if present,
+    # so loading actually reproduces the experiment instead of just its targets.
+    sampling = _parse_command_for_sampling(payload.get("command", ""))
+    if "k" in sampling: st.session_state["loaded_k"] = sampling["k"]
+    if "prob" in sampling: st.session_state["loaded_prob"] = sampling["prob"]
+    if "seed" in sampling: st.session_state["loaded_seed"] = sampling["seed"]
     _bump_nonce()
     # Nudge the prompt + target_output text_areas to re-render with the loaded values.
     st.session_state["prompt_text_nonce"] = st.session_state.get("prompt_text_nonce", 0) + 1
-    return True, f"Loaded {len(rows)} target(s) at positions {list(start_pos)}."
+    extras = []
+    if sampling: extras.append("sampling " + ", ".join(f"{k}={v}" for k, v in sampling.items()))
+    extra_str = (" — " + "; ".join(extras)) if extras else ""
+    return True, f"Loaded {len(rows)} target(s) at positions {list(start_pos)}{extra_str}."
 
 
 def targets_editor() -> pd.DataFrame:
-    """Render N rows of (target, start_pos, mode, step, 🗑) widgets.
+    """Card-per-target layout.
 
-    Each row is a Streamlit column-set. Per-row deletion is an explicit button rather
-    than the data_editor's hidden checkbox+toolbar -- the user asked for it. Adds /
-    resets / clears use callbacks so the layout reflects the change on the same run.
+    Earlier versions packed the four target fields into a single narrow row; with
+    long target strings (e.g. multi-sentence injections) the text input was unusable.
+    Now each target is its own bordered "card" with:
+      - a full-width text_area for the target string itself,
+      - a sub-row with start_pos / mode / step / delete underneath.
+    Card N gets a numbered header (#1, #2, ...) so multi-target experiments are
+    visually scannable.
     """
     _ensure_targets_state()
-
-    # Header row -- column proportions match the input row below so columns line up.
-    h1, h2, h3, h4, h5 = st.columns([4, 1.2, 1.5, 1.2, 0.7])
-    h1.markdown("**target string**")
-    h2.markdown("**start_pos**")
-    h3.markdown("**mode**")
-    h4.markdown("**step**")
-    h5.markdown("**·**")
-
     rows = st.session_state["target_rows"]
     nonce = st.session_state.get("targets_nonce", 0)
-    for i, row in enumerate(rows):
-        c1, c2, c3, c4, c5 = st.columns([4, 1.2, 1.5, 1.2, 0.7])
-        row["target"] = c1.text_input(
-            "target", value=row.get("target", ""),
-            key=f"tgt_target_{nonce}_{i}", label_visibility="collapsed",
-            placeholder="text to pin (e.g. 'Yes')",
-        )
-        row["start_pos"] = c2.number_input(
-            "start_pos", min_value=0, step=1,
-            value=int(row.get("start_pos", 0)),
-            key=f"tgt_start_{nonce}_{i}", label_visibility="collapsed",
-        )
-        row["mode"] = c3.selectbox(
-            "mode", options=["pin", "perturb"],
-            index=["pin", "perturb"].index(row.get("mode", "pin")),
-            key=f"tgt_mode_{nonce}_{i}", label_visibility="collapsed",
-        )
-        row["step"] = c4.number_input(
-            "step", min_value=0, step=1,
-            value=int(row.get("step", 0)),
-            key=f"tgt_step_{nonce}_{i}", label_visibility="collapsed",
-        )
-        c5.button(
-            "🗑", key=f"tgt_del_{nonce}_{i}",
-            help=f"remove row {i + 1}",
-            on_click=_remove_row_cb, args=(i,),
-            use_container_width=True,
-        )
-
-    # Footer: add / reset / clear -- callbacks mutate state before rerender.
-    f1, f2, f3, _ = st.columns([1.5, 1.5, 1.5, 4])
-    f1.button("➕ Add row", on_click=_add_row_cb, use_container_width=True)
-    f2.button("↺ Reset", on_click=_reset_rows_cb, use_container_width=True,
-              help="restore the example row")
-    f3.button("🗑 Clear all", on_click=_clear_rows_cb, use_container_width=True,
-              help="remove every row")
 
     if not rows:
-        st.info("No targets yet. Click **Add row** above to begin.")
+        st.info("No targets yet. Use **Add target** below to begin.")
+
+    for i, row in enumerate(rows):
+        with st.container(border=True):
+            # Header: card number + delete on the right.
+            h1, h2 = st.columns([6, 1])
+            h1.markdown(f"**Target #{i + 1}**")
+            h2.button(
+                "🗑 Delete",
+                key=f"tgt_del_{nonce}_{i}",
+                help=f"remove target #{i + 1}",
+                on_click=_remove_row_cb, args=(i,),
+                use_container_width=True,
+            )
+
+            # Target string -- full width text_area so long strings are readable.
+            row["target"] = st.text_area(
+                f"target string #{i + 1}",
+                value=row.get("target", ""),
+                key=f"tgt_target_{nonce}_{i}",
+                height=80,
+                placeholder=(
+                    "the text being forced into the canvas, e.g. "
+                    "'Napoleon clearly won at Waterloo, because'"
+                ),
+                help=(
+                    "Tokenized and pinned to consecutive positions starting at "
+                    "`start_pos`. Whitespace matters -- a leading space becomes part "
+                    "of the first pinned token."
+                ),
+            )
+
+            # Sub-row: position / mode / step. Wider columns than before because
+            # there are only three of them sharing the row.
+            sc1, sc2, sc3 = st.columns([1.2, 1.4, 1.2])
+            row["start_pos"] = sc1.number_input(
+                "start_pos",
+                min_value=0, step=1,
+                value=int(row.get("start_pos", 0)),
+                key=f"tgt_start_{nonce}_{i}",
+                help="first token position this target lands at",
+            )
+            row["mode"] = sc2.selectbox(
+                "mode",
+                options=["pin", "perturb"],
+                index=["pin", "perturb"].index(row.get("mode", "pin")),
+                key=f"tgt_mode_{nonce}_{i}",
+                help="`pin` = hard freeze; `perturb` = one-shot nudge then release",
+            )
+            row["step"] = sc3.number_input(
+                "step",
+                min_value=0, step=1,
+                value=int(row.get("step", 0)),
+                key=f"tgt_step_{nonce}_{i}",
+                help="denoising step (0..~47) at which this target fires",
+            )
+
+    # Footer: add / reset / clear -- callbacks mutate state before rerender.
+    f1, f2, f3, _ = st.columns([1.7, 1.3, 1.5, 4])
+    f1.button("➕ Add target", on_click=_add_row_cb, use_container_width=True)
+    f2.button("↺ Reset", on_click=_reset_rows_cb, use_container_width=True,
+              help="restore the example target")
+    f3.button("🗑 Clear all", on_click=_clear_rows_cb, use_container_width=True,
+              help="remove every target")
+
     return pd.DataFrame(rows) if rows else pd.DataFrame(
         columns=["target", "start_pos", "mode", "step"]
     )
@@ -463,7 +524,13 @@ with st.sidebar:
 
     with st.expander("Advanced", expanded=False):
         st.caption("Reproducibility + tracing knobs. Defaults are usually fine.")
-        seed = st.number_input("seed", value=0, step=1)
+        seed = st.number_input(
+            "seed",
+            value=int(st.session_state.pop("loaded_seed", st.session_state.get("seed_val", 0))),
+            step=1,
+            key=f"seed_input_{st.session_state.get('prompt_text_nonce', 0)}",
+        )
+        st.session_state["seed_val"] = seed
         trace_topk = st.number_input(
             "trace topk", min_value=1, value=8, step=1,
             help="how many candidates to record per traced position per step",
@@ -590,25 +657,35 @@ with tab_setup:
         # 3. Per-token interventions.
         st.markdown("#### 3. Targets (interventions)")
         st.caption(
-            "Each row is one intervention. **target string** = the text being forced into "
-            "the canvas; **start_pos** = its first token position; **mode** = `pin` "
-            "(hard freeze) or `perturb` (one-shot nudge); **step** = the denoising step "
-            "(0..~47) at which it fires. Multiple rows = staggered/multi-target steers. "
-            "Click 🗑 on any row to delete it."
+            "Each card below is **one target** -- a text snippet pinned at a specific "
+            "position. The target string sits in its own full-width text area so multi-"
+            "sentence injections stay readable; below it you set **start_pos** (first "
+            "token position), **mode** (`pin` or `perturb`), and **step** (denoising "
+            "step 0..~47 when this target fires). Use **➕ Add target** for staggered "
+            "or multi-position steers (Simon's experiments often have 2 targets at "
+            "different positions). Click 🗑 Delete to remove a target."
         )
         targets_df = targets_editor()
 
     with right:
         st.markdown("#### Sampling")
         k = st.number_input(
-            "k (top-k width)", min_value=1, value=1, step=1,
+            "k (top-k width)", min_value=1,
+            value=int(st.session_state.pop("loaded_k", st.session_state.get("k_val", 1))),
+            step=1,
             help="1 = hard freeze on the target; ≥2 spreads residual mass across runner-ups",
+            key=f"k_input_{st.session_state.get('prompt_text_nonce', 0)}",
         )
+        st.session_state["k_val"] = k
         prob = st.number_input(
             "prob (mass on target; 0 = hard pin)",
-            min_value=0.0, max_value=1.0, value=0.0, step=0.05,
+            min_value=0.0, max_value=1.0,
+            value=float(st.session_state.pop("loaded_prob", st.session_state.get("prob_val", 0.0))),
+            step=0.05,
             help="0 = leave probabilities unset (hard pin). >0 sets per-token mass.",
+            key=f"prob_input_{st.session_state.get('prompt_text_nonce', 0)}",
         )
+        st.session_state["prob_val"] = prob
 
         st.markdown("#### What this does")
         st.markdown(
