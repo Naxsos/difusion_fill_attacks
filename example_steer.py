@@ -182,29 +182,43 @@ def steer_strings(
 def decode_trace(trace, tokenizer) -> list[dict]:
     """Turn the server's raw per-step trace into a readable, JSON-safe structure.
 
-    Each denoising step becomes a record holding, for every recorded canvas position,
-    the top-k candidate tokens *the sampler saw at that step* with their probabilities
-    (decoded to strings). Steps are ordered as denoising actually ran (step_idx ascending
-    within each canvas), so you can read top-to-bottom to follow how each position firms
-    up over the model's "thinking".
+    Each denoising step becomes a record holding, for every recorded canvas position:
+    - ``positions``: post-intervention top-k (what the sampler actually saw)
+    - ``pre_positions``: pre-intervention top-k (the model's natural distribution before
+      any steering was applied), present only when the recorder was wired to an
+      InterventionLogitsProcessor
+    - ``steered_positions``: list of output positions actively steered at this step
+
+    Steps are ordered as denoising actually ran (step_idx ascending within each canvas).
     """
-    decoded = []
-    for rec in sorted(trace, key=lambda r: (r["canvas_idx"], r["step_idx"])):
-        positions = rec.get("positions", [])
-        topk_ids = rec.get("topk_ids", [])
-        topk_probs = rec.get("topk_probs", [])
+    def _decode_topk(positions, topk_ids, topk_probs):
         per_pos = {}
         for i, pos in enumerate(positions):
             per_pos[int(pos)] = [
                 {"id": int(tid), "token": tokenizer.decode([int(tid)]), "prob": round(float(p), 5)}
                 for tid, p in zip(topk_ids[i], topk_probs[i])
             ]
-        decoded.append({
+        return per_pos
+
+    decoded = []
+    for rec in sorted(trace, key=lambda r: (r["canvas_idx"], r["step_idx"])):
+        positions = rec.get("positions", [])
+        per_pos = _decode_topk(positions, rec.get("topk_ids", []), rec.get("topk_probs", []))
+
+        entry: dict = {
             "step_idx": rec["step_idx"],
             "cur_step": rec["cur_step"],
             "canvas_idx": rec["canvas_idx"],
             "positions": per_pos,
-        })
+            "steered_positions": rec.get("steered_positions", []),
+        }
+
+        if "pre_topk_ids" in rec:
+            entry["pre_positions"] = _decode_topk(
+                positions, rec["pre_topk_ids"], rec["pre_topk_probs"]
+            )
+
+        decoded.append(entry)
     return decoded
 
 

@@ -62,6 +62,7 @@ class InterventionLogitsProcessor(LogitsProcessor):
         self.total_steps = total_steps
         self.t_min = t_min
         self.t_max = t_max
+        self.last_steered: list[int] = []
 
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor, cur_step
@@ -71,6 +72,10 @@ class InterventionLogitsProcessor(LogitsProcessor):
         c_idx = canvas_index(input_ids, self.prompt_len, self.canvas_length)
         temp = compute_temperature(cur, self.t_min, self.t_max, self.total_steps)
 
+        # Snapshot pre-intervention logits (float32 copy so downstream mutations don't corrupt it).
+        self.last_pre_scores: torch.FloatTensor = scores[self.config.batch_index].float().clone()
+
+        steered: list[int] = []
         for iv in self.interventions:
             if iv.position // self.canvas_length != c_idx:
                 continue
@@ -82,6 +87,10 @@ class InterventionLogitsProcessor(LogitsProcessor):
             # T * log(D): the downstream /T recovers log(D) -> softmax == D. log(0) -> -inf.
             log_dist = torch.log(dist)
             scores[:, local, :] = (temp * log_dist).to(scores.dtype)
+            steered.append(iv.position)  # global output position
+
+        # Store for the recorder to pick up: positions actively steered this step.
+        self.last_steered: list[int] = steered
 
         return scores
 
@@ -142,6 +151,12 @@ class StepRecorder(LogitsProcessor):
 
     Records to CPU so GPU memory doesn't grow across steps. Access the captured data via
     ``.records`` (a list of dicts, one per denoising step, in call order).
+
+    Pass ``intervention_processor`` to also capture pre-intervention (natural) top-k and
+    which positions were actively steered at each step.  The intervention processor must
+    run *before* this recorder in the LogitsProcessorList, and must have stored
+    ``last_pre_scores`` and ``last_steered`` on itself (which InterventionLogitsProcessor
+    does when constructed alongside a recorder).
     """
 
     def __init__(
@@ -153,6 +168,7 @@ class StepRecorder(LogitsProcessor):
         total_steps: int,
         t_min: float | None,
         t_max: float | None,
+        intervention_processor: "InterventionLogitsProcessor | None" = None,
     ):
         self.config = config
         self.prompt_len = prompt_len
@@ -160,6 +176,7 @@ class StepRecorder(LogitsProcessor):
         self.total_steps = total_steps
         self.t_min = t_min
         self.t_max = t_max
+        self.intervention_processor = intervention_processor
         self.records: list[dict] = []
         if config.record_full_logits:
             warnings.warn(
@@ -168,6 +185,22 @@ class StepRecorder(LogitsProcessor):
                 stacklevel=2,
             )
 
+    def _topk_from_logits(
+        self,
+        logits: torch.Tensor,
+        pos: torch.Tensor,
+        cfg: "RecorderConfig",
+        temp: float,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Return (log_z, top_ids, top_probs) for the given positions."""
+        if cfg.post_temperature:
+            logits = logits / temp
+        log_z = torch.logsumexp(logits, dim=-1, keepdim=True)
+        sel = logits[pos]
+        top_vals, top_idx = torch.topk(sel, min(cfg.top_k, sel.shape[-1]), dim=-1)
+        top_probs = (top_vals - log_z[pos]).exp()
+        return log_z, top_idx, top_probs
+
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor, cur_step
     ) -> torch.FloatTensor:
@@ -175,7 +208,7 @@ class StepRecorder(LogitsProcessor):
         cfg = self.config
         temp = compute_temperature(cur, self.t_min, self.t_max, self.total_steps)
 
-        # (canvas_length, vocab) float32 logits for the recorded sequence, post-temp if asked.
+        # Post-intervention logits (what the sampler actually sees).
         logits = scores[cfg.batch_index].float()
         if cfg.post_temperature:
             logits = logits / temp
@@ -204,6 +237,15 @@ class StepRecorder(LogitsProcessor):
         record["positions"] = pos.cpu()
         record["topk_ids"] = top_idx.cpu()
         record["topk_probs"] = (top_vals - log_z[pos]).exp().cpu()  # softmax over vocab
+
+        # Pre-intervention (natural model) top-k, if the intervention processor is wired in.
+        iv_proc = self.intervention_processor
+        if iv_proc is not None and hasattr(iv_proc, "last_pre_scores"):
+            pre_logits = iv_proc.last_pre_scores  # already float32, same device as scores
+            _, pre_top_idx, pre_top_probs = self._topk_from_logits(pre_logits, pos, cfg, temp)
+            record["pre_topk_ids"] = pre_top_idx.cpu()
+            record["pre_topk_probs"] = pre_top_probs.cpu()
+            record["steered_positions"] = list(iv_proc.last_steered)
 
         if cfg.record_full_logits:
             record["logits"] = logits.half().cpu()

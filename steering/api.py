@@ -176,7 +176,8 @@ def steer(
     recorder: StepRecorder | None = None
     if record:
         cfg = record if isinstance(record, RecorderConfig) else RecorderConfig()
-        recorder = StepRecorder(cfg, **shared)
+        intervention_proc = processors[-1]  # the InterventionLogitsProcessor just appended
+        recorder = StepRecorder(cfg, **shared, intervention_processor=intervention_proc)
         processors.append(recorder)
 
     if seed is not None:
