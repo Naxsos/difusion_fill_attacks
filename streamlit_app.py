@@ -1,38 +1,35 @@
 """Streamlit workbench for the diffusion fill-attack experiments.
 
-A frontend over the same `client.steer` + `example_steer.steer_strings` pipeline that
-`run_experiments.py` and the CLI use, so anything you can do here you can also do from
-the terminal -- nothing about the model or server changes. The heavy ~52 GB model stays
-on whichever box runs `server.py`; this app only needs `streamlit`, `pandas`, and the
-lightweight tokenizer (loaded once and cached).
+Same `client.steer` + `example_steer.steer_strings` pipeline `run_experiments.py` and
+the CLI use; the heavy ~52 GB model stays on whichever box runs `server.py`. This app
+only needs `streamlit`, `pandas`, `altair`, and the lightweight tokenizer.
 
-What the workbench gives you
-----------------------------
-1. A form for every `SteerConfig` knob (prompt, per-target text/start_pos/mode/step,
-   k/prob, seed, server host/port, trace topk/positions). Multi-target steering uses
-   one row per target so you can stage interventions at different denoising steps.
-2. A run button that calls the same `steer_strings(...)` the CLI uses, prints the
-   baseline next to the steered text, lists what landed at each pinned position, and
-   surfaces `all_held`.
-3. A convergence visualization for DiffusionGemma's denoising loop, built from the
-   per-step trace that the server records at the traced positions:
-     * top-1 token trajectory per position (a heatmap-style table -- one column per
-       denoising step, one row per traced position),
-     * top-1 probability curves over denoising steps per position (line chart),
-     * top-k probability stack at a selected position (stacked area chart, so you can
-       see the model commit to a token as competing tokens decay).
+Layout
+------
+Sidebar  -> Run button + collapsed Server / Advanced settings (defaults already work).
+Main     -> Three tabs:
+  1. Setup      -- prompt, targets table, sampling knobs (k / prob).
+  2. Results    -- baseline vs steered, pin survival, raw interventions.
+  3. Convergence-- step scrubber drives a left canvas (full denoising state at the
+                   selected step, opacity + blur = top-1 probability) and a right
+                   "distribution sidebar" that shows the top-k probability bars at
+                   the focused position so you can watch the model's belief narrow
+                   from spread-out (early, unsure) to spike (late, committed).
+                   Below that: film-strip overview, top-1 trajectory, top-k area.
 
 Launch (the diffusion server must already be running -- see SERVER.md):
 
-    pip install streamlit pandas
+    pip install streamlit pandas altair
     streamlit run streamlit_app.py
 """
 
 from __future__ import annotations
 
 import json
+import math
 import traceback
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -41,8 +38,8 @@ from example_steer import decode_trace, load_tokenizer, steer_strings
 
 
 # Cache the tokenizer across reruns. Streamlit reruns the script top-to-bottom on every
-# interaction; without this we'd re-download/parse the tokenizer each click. The model is
-# remote (server.py), so this only loads tokenizer files -- still worth caching.
+# interaction; without this we'd re-parse the tokenizer each click. The model is remote
+# (server.py), so this only loads tokenizer files -- still worth caching.
 @st.cache_resource(show_spinner="Loading tokenizer (no GPU)...")
 def _tokenizer():
     return load_tokenizer()
@@ -53,12 +50,7 @@ def _tokenizer():
 # ---------------------------------------------------------------------------
 
 def trajectory_frame(decoded: list[dict]) -> pd.DataFrame:
-    """One row per traced position, one column per denoising step, value = top-1 token.
-
-    Reads the same `decoded` shape `print_trace_summary` uses, so what you see here
-    matches what the CLI prints. Steps may be missing for some records (the recorder
-    only fires when a position is touched), so we fill gaps with empty strings.
-    """
+    """One row per traced position, one column per denoising step, value = top-1 token."""
     rows: dict[int, dict[int, str]] = {}
     for rec in decoded:
         step = rec["step_idx"]
@@ -67,9 +59,9 @@ def trajectory_frame(decoded: list[dict]) -> pd.DataFrame:
                 rows.setdefault(int(pos), {})[step] = cands[0]["token"]
     if not rows:
         return pd.DataFrame()
-    all_steps = sorted({s for r in rows.values() for s in r})
     df = pd.DataFrame(
-        {step: [rows[p].get(step, "") for p in sorted(rows)] for step in all_steps},
+        {step: [rows[p].get(step, "") for p in sorted(rows)]
+         for step in sorted({s for r in rows.values() for s in r})},
         index=[f"pos {p}" for p in sorted(rows)],
     )
     df.columns = [f"step {s}" for s in df.columns]
@@ -77,12 +69,7 @@ def trajectory_frame(decoded: list[dict]) -> pd.DataFrame:
 
 
 def top1_prob_frame(decoded: list[dict]) -> pd.DataFrame:
-    """Top-1 probability over denoising steps, one column per traced position.
-
-    Lets you see how confident the model is at each pinned/traced position step by
-    step -- a hard pin reads as a flat 1.0; a "perturb"-then-release reads as a spike
-    that decays; an unsteered position reads as a slow climb to commitment.
-    """
+    """Top-1 probability over denoising steps, one column per traced position."""
     rows: list[dict] = []
     for rec in decoded:
         row = {"step": rec["step_idx"]}
@@ -92,17 +79,11 @@ def top1_prob_frame(decoded: list[dict]) -> pd.DataFrame:
         rows.append(row)
     if not rows:
         return pd.DataFrame()
-    df = pd.DataFrame(rows).groupby("step").last().sort_index()
-    return df
+    return pd.DataFrame(rows).groupby("step").last().sort_index()
 
 
 def topk_at_position_frame(decoded: list[dict], position: int, top_k: int) -> pd.DataFrame:
-    """Top-k token probabilities at one position over denoising steps.
-
-    The point is to watch the *competing* candidates collapse as the canvas commits:
-    early steps spread mass over many tokens, late steps put almost all of it on one.
-    Tokens that never enter the top-k are dropped to keep the legend readable.
-    """
+    """Top-k token probabilities at one position over denoising steps (long format)."""
     rows: list[dict] = []
     for rec in decoded:
         cands = rec["positions"].get(position, [])
@@ -114,24 +95,157 @@ def topk_at_position_frame(decoded: list[dict], position: int, top_k: int) -> pd
         rows.append(row)
     if not rows:
         return pd.DataFrame()
-    df = pd.DataFrame(rows).groupby("step").last().sort_index().fillna(0.0)
-    return df
+    return pd.DataFrame(rows).groupby("step").last().sort_index().fillna(0.0)
+
+
+def distribution_at(decoded: list[dict], step: int, position: int, top_k: int) -> pd.DataFrame:
+    """Top-k token candidates at (step, position), sorted by probability descending.
+
+    This is the data the right-pane "distribution sidebar" plots: a snapshot of the
+    sampler's belief over tokens at one moment in denoising. As `step` advances, mass
+    concentrates on the winner -- rendered as a horizontal bar chart it makes the
+    convergence visceral.
+    """
+    rec = next((r for r in decoded if r["step_idx"] == step), None)
+    if rec is None:
+        return pd.DataFrame()
+    cands = rec["positions"].get(position, [])
+    if not cands:
+        return pd.DataFrame()
+    df = pd.DataFrame(cands[:top_k])
+    df["display"] = df["token"].apply(lambda t: t.replace(" ", "·").replace("\n", "⏎") or "∅")
+    return df[["display", "token", "prob"]].sort_values("prob", ascending=False).reset_index(drop=True)
 
 
 # ---------------------------------------------------------------------------
-# Denoising film-strip: render the canvas at every step with confidence-driven
+# Streaming-process diagnostics: derived frames that tell you *what* the diffusion
+# is doing as it converges -- not just "what token is on top now", but how fast,
+# in what order, and how chaotically.
+# ---------------------------------------------------------------------------
+
+def _entropy_of(cands: list[dict]) -> float:
+    """Shannon entropy of the top-k slice. Treats the trace's top-k as the support;
+    this under-estimates true entropy (we don't see the long tail) but it's monotone
+    in the sharpness of the winner, which is what we care about visually.
+    """
+    return -sum(c["prob"] * math.log(max(c["prob"], 1e-12)) for c in cands)
+
+
+def entropy_frame(decoded: list[dict]) -> pd.DataFrame:
+    """Long DF (step, position, entropy) for the per-position heatmap."""
+    rows = []
+    for rec in decoded:
+        for pos, cands in rec["positions"].items():
+            if cands:
+                rows.append({"step": rec["step_idx"], "position": int(pos),
+                             "entropy": _entropy_of(cands)})
+    return pd.DataFrame(rows)
+
+
+def mean_entropy_curve(decoded: list[dict]) -> pd.DataFrame:
+    """Per-step canvas-wide stats: mean and max entropy across traced positions.
+
+    Mean is the headline -- "how unsure is the canvas overall right now". Max is the
+    tail -- "is there at least one position still hedging".
+    """
+    by_step: dict[int, list[float]] = {}
+    for rec in decoded:
+        ents = [_entropy_of(c) for c in rec["positions"].values() if c]
+        if ents:
+            by_step.setdefault(rec["step_idx"], []).extend(ents)
+    return pd.DataFrame([
+        {"step": s, "mean_entropy": sum(es) / len(es), "max_entropy": max(es)}
+        for s, es in sorted(by_step.items())
+    ])
+
+
+def commitment_frame(decoded: list[dict], threshold: float = 0.9) -> pd.DataFrame:
+    """For each traced position, the first step where top-1 prob >= threshold.
+
+    Positions that never crossed the threshold get `commit_step = NaN` and surface
+    in the chart at the right edge so they're visible-but-flagged. Steered (pinned)
+    positions tend to commit at step 0; unsteered positions reveal the *order* in
+    which the model resolves the canvas.
+    """
+    first: dict[int, int | None] = {}
+    final_tok: dict[int, str] = {}
+    final_prob: dict[int, float] = {}
+    for rec in sorted(decoded, key=lambda r: r["step_idx"]):
+        for pos, cands in rec["positions"].items():
+            if not cands:
+                continue
+            pos = int(pos)
+            top = cands[0]
+            if first.get(pos) is None and top["prob"] >= threshold:
+                first[pos] = rec["step_idx"]
+            final_tok[pos] = top["token"]
+            final_prob[pos] = top["prob"]
+    rows = []
+    for pos in sorted(final_tok):
+        rows.append({
+            "position": pos,
+            "commit_step": first.get(pos),
+            "final_token": final_tok[pos].replace(" ", "·").replace("\n", "⏎") or "∅",
+            "final_prob": final_prob[pos],
+        })
+    return pd.DataFrame(rows)
+
+
+def final_rank_frame(decoded: list[dict]) -> pd.DataFrame:
+    """For each (step, position), the rank (1..k) of the *final winning token*.
+
+    The "final winner" is the top-1 at the very last traced step. This frame answers
+    the question "did the right answer show up early and wait, or only at the end?"
+    -- a position whose final-winner-rank starts at 5 and walks down to 1 over many
+    steps was actively reconsidering; one that hits rank 1 on step 0 was decided.
+    Tokens not in the recorded top-k at a given step get rank = top_k + 1 (i.e.
+    "off-screen") so the line stays drawable.
+    """
+    by_step = sorted(decoded, key=lambda r: r["step_idx"])
+    if not by_step:
+        return pd.DataFrame()
+    last = by_step[-1]
+    final_winner: dict[int, str] = {
+        int(p): cands[0]["token"]
+        for p, cands in last["positions"].items() if cands
+    }
+    rows = []
+    # Determine the per-record top-k so an "off-screen" rank is one past it.
+    for rec in by_step:
+        for pos, cands in rec["positions"].items():
+            if not cands or int(pos) not in final_winner:
+                continue
+            target = final_winner[int(pos)]
+            rank = next((i + 1 for i, c in enumerate(cands) if c["token"] == target), len(cands) + 1)
+            rows.append({"step": rec["step_idx"], "position": int(pos), "rank": rank})
+    return pd.DataFrame(rows)
+
+
+def churn_frame(decoded: list[dict]) -> pd.DataFrame:
+    """Per position, count the number of distinct tokens that ever held top-1.
+
+    A position with churn=1 was decided from step 0; churn=8 means the model swapped
+    its #1 hypothesis seven times before settling. High churn next to a pin can
+    indicate the steer is reshaping the neighborhood.
+    """
+    seen: dict[int, set[str]] = {}
+    for rec in decoded:
+        for pos, cands in rec["positions"].items():
+            if cands:
+                seen.setdefault(int(pos), set()).add(cands[0]["token"])
+    return pd.DataFrame([
+        {"position": p, "distinct_top1": len(s)}
+        for p, s in sorted(seen.items())
+    ])
+
+
+# ---------------------------------------------------------------------------
+# Step canvas: render every traced position at one step with confidence-driven
 # opacity + blur, so "uncertain early, certain late" reads visually.
 # ---------------------------------------------------------------------------
 
 def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
-                      steered_positions: set[int]) -> str:
-    """One step rendered as inline tokens.
-
-    Each token's *opacity* is its top-1 probability and a *blur* is applied at low
-    probability, so a step where the model is unsure reads as a hazy grey blur, and a
-    step where it has committed reads as crisp black text. Steered (pinned) positions
-    are tinted so you can see the intervention's reach.
-    """
+                      steered_positions: set[int], focus: int | None = None) -> str:
     rec = next((r for r in decoded if r["step_idx"] == step_idx), None)
     if rec is None:
         return "<em>(no record at this step)</em>"
@@ -144,164 +258,376 @@ def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
         tok = cands[0]["token"]
         prob = float(cands[0]["prob"])
         # Map probability to perceptual cues: low prob -> faint + blurred, high prob -> bold.
-        # Floor opacity so faint tokens are still legible enough to recognize the canvas.
         opacity = 0.15 + 0.85 * prob
         blur_px = max(0.0, 3.0 * (1.0 - prob))
         weight = 700 if prob > 0.85 else 400
-        color = "#1f4ed8" if pos in steered_positions else "#111"
-        # Whitespace tokens would collapse in HTML; show them as a visible glyph.
-        display = tok.replace(" ", "·").replace("\n", "⏎")
+        if pos == focus:
+            color, bg, border = "#b91c1c", "#fee2e2", "1px solid #ef4444"
+        elif pos in steered_positions:
+            color, bg, border = "#1f4ed8", "#eef3ff", "0"
+        else:
+            color, bg, border = "#111", "transparent", "0"
+        display = tok.replace(" ", "·").replace("\n", "⏎") or "∅"
         spans.append(
             f"<span title='pos {pos} · p={prob:.2f}' "
             f"style='display:inline-block;margin:0 1px;padding:1px 3px;"
             f"opacity:{opacity:.3f};filter:blur({blur_px:.2f}px);"
-            f"font-weight:{weight};color:{color};border-radius:3px;"
-            f"background:{'#eef3ff' if pos in steered_positions else 'transparent'}'>"
-            f"{display}</span>"
+            f"font-weight:{weight};color:{color};border:{border};border-radius:3px;"
+            f"background:{bg}'>{display}</span>"
         )
     return "".join(spans)
 
 
 # ---------------------------------------------------------------------------
-# Targets editor: one row per intervention target.
+# Targets editor: one explicit row of widgets per target, each with its own
+# delete button. data_editor's row deletion is too hidden -- this surfaces it.
 # ---------------------------------------------------------------------------
 
-DEFAULT_TARGETS = pd.DataFrame(
-    [{"target": "Yes", "start_pos": 0, "mode": "pin", "step": 0}]
-)
+DEFAULT_TARGET_ROW = {"target": "Yes", "start_pos": 0, "mode": "pin", "step": 0}
+
+
+def _ensure_targets_state() -> None:
+    if "target_rows" not in st.session_state:
+        st.session_state["target_rows"] = [dict(DEFAULT_TARGET_ROW)]
+    if "targets_nonce" not in st.session_state:
+        # Bumped every time we *replace* the row list wholesale (load, reset, clear);
+        # baked into widget keys so old per-row widget state doesn't bleed into new rows.
+        st.session_state["targets_nonce"] = 0
+
+
+def _bump_nonce() -> None:
+    st.session_state["targets_nonce"] = st.session_state.get("targets_nonce", 0) + 1
+
+
+def _add_row_cb() -> None:
+    st.session_state["target_rows"].append(dict(DEFAULT_TARGET_ROW))
+
+
+def _remove_row_cb(idx: int) -> None:
+    rows = st.session_state["target_rows"]
+    if 0 <= idx < len(rows):
+        rows.pop(idx)
+    # Removing a row shifts trailing indices; bump nonce so stale widget keys are dropped.
+    _bump_nonce()
+
+
+def _reset_rows_cb() -> None:
+    st.session_state["target_rows"] = [dict(DEFAULT_TARGET_ROW)]
+    _bump_nonce()
+
+
+def _clear_rows_cb() -> None:
+    st.session_state["target_rows"] = []
+    _bump_nonce()
+
+
+def _load_experiment_into_state(payload: dict) -> tuple[bool, str]:
+    """Pull prompt + targets + start_pos out of a Simon's-style experiment JSON
+    and mirror them into session_state. Returns (ok, message).
+
+    Schema we expect (all of Simon's files match this -- the result/verdict fields
+    are optional and only used for the preview pane below):
+      {
+        "prompt": str,
+        "targets": [str, ...],
+        "start_pos": [int, ...],
+        # optional, shown in the "loaded experiment" preview:
+        "baseline": str, "steered": str, "landed": str, "all_held": bool,
+        "verdict": int, "justification": str, "command": str, "source_txt": str,
+      }
+    """
+    if not isinstance(payload, dict):
+        return False, "Top-level JSON must be an object."
+    prompt = payload.get("prompt")
+    targets = payload.get("targets")
+    start_pos = payload.get("start_pos")
+    if not isinstance(prompt, str) or not prompt.strip():
+        return False, "Missing or empty `prompt` field."
+    if not isinstance(targets, list) or not targets:
+        return False, "Missing or empty `targets` array."
+    if not isinstance(start_pos, list) or len(start_pos) != len(targets):
+        return False, "`start_pos` must be a list the same length as `targets`."
+
+    # The Simon files don't carry per-target mode/step (they all default to pin@step 0),
+    # but the workbench supports them, so we accept optional `modes` / `steps` if present.
+    modes = payload.get("modes") or ["pin"] * len(targets)
+    steps = payload.get("steps") or [0] * len(targets)
+    if len(modes) != len(targets) or len(steps) != len(targets):
+        return False, "`modes` / `steps`, if provided, must match `targets` length."
+
+    rows = []
+    for tgt, sp, m, st_ in zip(targets, start_pos, modes, steps):
+        rows.append({
+            "target": str(tgt),
+            "start_pos": int(sp),
+            "mode": m if m in ("pin", "perturb") else "pin",
+            "step": int(st_),
+        })
+
+    st.session_state["target_rows"] = rows
+    st.session_state["loaded_prompt"] = prompt
+    # Use the joined targets as the "target output" so the user sees the goal as text.
+    st.session_state["loaded_target_output"] = "".join(targets)
+    # Stash the whole payload so we can show baseline / steered / verdict alongside.
+    st.session_state["loaded_experiment"] = payload
+    _bump_nonce()
+    # Nudge the prompt + target_output text_areas to re-render with the loaded values.
+    st.session_state["prompt_text_nonce"] = st.session_state.get("prompt_text_nonce", 0) + 1
+    return True, f"Loaded {len(rows)} target(s) at positions {list(start_pos)}."
 
 
 def targets_editor() -> pd.DataFrame:
-    """Editable table where each row is one (target string, start_pos, mode, step).
+    """Render N rows of (target, start_pos, mode, step, 🗑) widgets.
 
-    Mirrors `SteerConfig`'s per-target parallel lists -- the table form keeps related
-    fields together so you can't desync `start_pos[i]` from `target[i]`.
-
-    The data_editor itself supports row removal (select a row's leftmost checkbox and
-    press the trash icon in its toolbar), but that affordance is easy to miss, so we
-    expose explicit "Clear all" / "Reset to default" buttons next to the table.
+    Each row is a Streamlit column-set. Per-row deletion is an explicit button rather
+    than the data_editor's hidden checkbox+toolbar -- the user asked for it. Adds /
+    resets / clears use callbacks so the layout reflects the change on the same run.
     """
-    if "targets_df" not in st.session_state:
-        st.session_state["targets_df"] = DEFAULT_TARGETS.copy()
+    _ensure_targets_state()
 
-    # Buttons mutate session_state *before* the editor renders so the editor picks up
-    # the new value on this run. Each click sets a fresh editor key so Streamlit drops
-    # any stale per-row UI state from the previous frame.
-    btn_clear, btn_reset, _ = st.columns([1, 1, 6])
-    if btn_clear.button("Clear all rows", help="empty the table"):
-        st.session_state["targets_df"] = DEFAULT_TARGETS.iloc[0:0].copy()
-        st.session_state["targets_editor_nonce"] = st.session_state.get("targets_editor_nonce", 0) + 1
-    if btn_reset.button("Reset to default", help="restore the example row"):
-        st.session_state["targets_df"] = DEFAULT_TARGETS.copy()
-        st.session_state["targets_editor_nonce"] = st.session_state.get("targets_editor_nonce", 0) + 1
+    # Header row -- column proportions match the input row below so columns line up.
+    h1, h2, h3, h4, h5 = st.columns([4, 1.2, 1.5, 1.2, 0.7])
+    h1.markdown("**target string**")
+    h2.markdown("**start_pos**")
+    h3.markdown("**mode**")
+    h4.markdown("**step**")
+    h5.markdown("**·**")
 
-    edited = st.data_editor(
-        st.session_state["targets_df"],
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "target": st.column_config.TextColumn(
-                "target string", help="will be tokenized and pinned to consecutive positions"
-            ),
-            "start_pos": st.column_config.NumberColumn("start_pos", min_value=0, step=1),
-            "mode": st.column_config.SelectboxColumn("mode", options=["pin", "perturb"]),
-            "step": st.column_config.NumberColumn(
-                "step", min_value=0, step=1,
-                help="denoising step (0..~47) at which this target fires",
-            ),
-        },
-        key=f"targets_editor_{st.session_state.get('targets_editor_nonce', 0)}",
+    rows = st.session_state["target_rows"]
+    nonce = st.session_state.get("targets_nonce", 0)
+    for i, row in enumerate(rows):
+        c1, c2, c3, c4, c5 = st.columns([4, 1.2, 1.5, 1.2, 0.7])
+        row["target"] = c1.text_input(
+            "target", value=row.get("target", ""),
+            key=f"tgt_target_{nonce}_{i}", label_visibility="collapsed",
+            placeholder="text to pin (e.g. 'Yes')",
+        )
+        row["start_pos"] = c2.number_input(
+            "start_pos", min_value=0, step=1,
+            value=int(row.get("start_pos", 0)),
+            key=f"tgt_start_{nonce}_{i}", label_visibility="collapsed",
+        )
+        row["mode"] = c3.selectbox(
+            "mode", options=["pin", "perturb"],
+            index=["pin", "perturb"].index(row.get("mode", "pin")),
+            key=f"tgt_mode_{nonce}_{i}", label_visibility="collapsed",
+        )
+        row["step"] = c4.number_input(
+            "step", min_value=0, step=1,
+            value=int(row.get("step", 0)),
+            key=f"tgt_step_{nonce}_{i}", label_visibility="collapsed",
+        )
+        c5.button(
+            "🗑", key=f"tgt_del_{nonce}_{i}",
+            help=f"remove row {i + 1}",
+            on_click=_remove_row_cb, args=(i,),
+            use_container_width=True,
+        )
+
+    # Footer: add / reset / clear -- callbacks mutate state before rerender.
+    f1, f2, f3, _ = st.columns([1.5, 1.5, 1.5, 4])
+    f1.button("➕ Add row", on_click=_add_row_cb, use_container_width=True)
+    f2.button("↺ Reset", on_click=_reset_rows_cb, use_container_width=True,
+              help="restore the example row")
+    f3.button("🗑 Clear all", on_click=_clear_rows_cb, use_container_width=True,
+              help="remove every row")
+
+    if not rows:
+        st.info("No targets yet. Click **Add row** above to begin.")
+    return pd.DataFrame(rows) if rows else pd.DataFrame(
+        columns=["target", "start_pos", "mode", "step"]
     )
-    st.session_state["targets_df"] = edited
-    st.caption(
-        "Tip: to remove a row, click its left-edge checkbox and then the 🗑️ icon that "
-        "appears in the table's toolbar (top-right of the table). Or use **Clear all rows** above."
-    )
-    return edited
 
 
 # ---------------------------------------------------------------------------
-# UI.
+# UI
 # ---------------------------------------------------------------------------
 
 st.set_page_config(page_title="DiffusionGemma fill-attack workbench", layout="wide")
 st.title("DiffusionGemma fill-attack workbench")
 
+# --- Sidebar: run button + collapsed settings ------------------------------
 with st.sidebar:
-    st.subheader("Server")
-    st.caption(
-        "ℹ️ The values below are the working defaults for the bundled `server.py`. "
-        "**You don't need to change anything here** unless you're running the server "
-        "on a different host/port."
-    )
-    host = st.text_input("host", value="localhost")
-    port = st.number_input("port", value=8000, step=1)
-    st.subheader("Sampling")
-    k = st.number_input(
-        "k (top-k width)", min_value=1, value=1, step=1,
-        help="1 = hard freeze on the target; >=2 spreads residual mass across runner-ups",
-    )
-    prob = st.number_input(
-        "prob (mass on target; 0 = hard pin)", min_value=0.0, max_value=1.0,
-        value=0.0, step=0.05,
-        help="0 means leave probabilities unset (hard pin). >0 sets per-token mass.",
-    )
-    seed = st.number_input("seed", value=0, step=1)
-    st.subheader("Trace")
-    trace_topk = st.number_input("trace topk", min_value=1, value=5, step=1)
-    extra_positions = st.text_input(
-        "extra trace positions (comma-separated, optional)", value="",
-        help="defaults to the steered positions; add more here to track unsteered tokens",
-    )
+    st.markdown("### ▶ Run")
+    run = st.button("Run experiment", type="primary", use_container_width=True)
+    if "last_run" in st.session_state:
+        st.caption(f"Last run: **{len(st.session_state['last_run'].get('decoded', []))}** trace records")
 
-# --- Inputs (ordered: targets first, then prompt, then everything else) ---
-st.markdown("### 1. Targets")
-st.markdown(
-    "Each row is one intervention -- the **target string** is the text you're forcing "
-    "into the canvas, **start_pos** is the token position it lands at, **mode** picks "
-    "between a hard pin and a one-shot perturbation, and **step** is the denoising "
-    "step (0..~47) at which the intervention fires. Add rows for staggered steers."
-)
-targets_df = targets_editor()
+    with st.expander("Server", expanded=False):
+        st.caption(
+            "ℹ️ Defaults match the bundled `server.py`. "
+            "**No change needed** unless your server is on a different host/port."
+        )
+        host = st.text_input("host", value="localhost")
+        port = st.number_input("port", value=8000, step=1)
 
-st.markdown("### 2. Prompt")
-prompt = st.text_area(
-    "Prompt sent to the model",
-    value="Is a hot dog a sandwich? Give a one-word verdict (Yes or No), then explain.",
-    height=90,
-    label_visibility="collapsed",
+    with st.expander("Advanced", expanded=False):
+        st.caption("Reproducibility + tracing knobs. Defaults are usually fine.")
+        seed = st.number_input("seed", value=0, step=1)
+        trace_topk = st.number_input(
+            "trace topk", min_value=1, value=8, step=1,
+            help="how many candidates to record per traced position per step",
+        )
+        extra_positions = st.text_input(
+            "extra trace positions", value="",
+            help="comma-separated extra positions to track besides the steered ones",
+        )
+
+# --- Tabs -------------------------------------------------------------------
+tab_setup, tab_results, tab_converge = st.tabs(
+    ["⚙️ Setup", "📊 Results", "🌫️ Convergence"]
 )
 
-with st.expander("Advanced: all other inputs (sampling, trace, server)", expanded=False):
-    st.markdown(
-        "These are the same values shown in the sidebar -- mirrored here so every input "
-        "is reachable from the main panel. Editing either copy syncs the run."
-    )
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("**Sampling**")
-        st.write(f"k (top-k width): `{int(k)}`")
-        st.write(f"prob (mass on target): `{float(prob)}`")
-        st.write(f"seed: `{int(seed)}`")
-    with c2:
-        st.markdown("**Trace**")
-        st.write(f"trace topk: `{int(trace_topk)}`")
-        st.write(f"extra trace positions: `{extra_positions or '(none)'}`")
-    with c3:
-        st.markdown("**Server**")
-        st.write(f"host: `{host}`")
-        st.write(f"port: `{int(port)}`")
+# --- SETUP TAB --------------------------------------------------------------
+with tab_setup:
+    # File uploader sits *above* the two-column setup so it's the first thing you
+    # see -- "load an experiment and we fill the form for you" is a faster path than
+    # typing prompts/targets by hand. The Simon's experiments in simons_experiments/
+    # all match the schema we accept.
+    with st.expander("📂 Load experiment from JSON", expanded=False):
+        st.caption(
+            "Upload a Simon's-style experiment JSON (e.g. files in `simons_experiments/`). "
+            "The **prompt**, **target output**, and **Targets** rows below will be filled "
+            "from the file. If the file also contains saved `baseline` / `steered` text "
+            "and a judge `verdict`, you'll see them in a preview pane after loading."
+        )
+        uploaded = st.file_uploader(
+            "experiment file", type=["json"], label_visibility="collapsed",
+            key=f"exp_uploader_{st.session_state.get('uploader_nonce', 0)}",
+        )
+        if uploaded is not None:
+            try:
+                payload = json.loads(uploaded.read().decode("utf-8"))
+                ok, msg = _load_experiment_into_state(payload)
+                if ok:
+                    st.success(f"✅ {uploaded.name} -- {msg}")
+                    # Bump the uploader nonce so the same file can be re-uploaded later;
+                    # otherwise Streamlit keeps the file handle and won't trigger again.
+                    st.session_state["uploader_nonce"] = st.session_state.get("uploader_nonce", 0) + 1
+                    st.rerun()
+                else:
+                    st.error(f"⚠ {uploaded.name}: {msg}")
+            except json.JSONDecodeError as e:
+                st.error(f"Could not parse JSON: {e}")
 
-run = st.button("Run experiment", type="primary")
+        # If we have a previously-loaded experiment, show its saved results so the user
+        # can compare without re-running the model.
+        loaded = st.session_state.get("loaded_experiment")
+        if loaded:
+            colA, colB = st.columns(2)
+            with colA:
+                st.markdown("**Saved baseline (from file)**")
+                st.caption("The output the file recorded for this prompt without steering.")
+                st.write(loaded.get("baseline", "_(not in file)_"))
+            with colB:
+                st.markdown("**Saved steered (from file)**")
+                st.caption("The output recorded after the steer was applied.")
+                st.write(loaded.get("steered", "_(not in file)_"))
+            verdict = loaded.get("verdict")
+            justification = loaded.get("justification")
+            if verdict is not None or justification:
+                m1, m2, m3 = st.columns(3)
+                if verdict is not None:
+                    m1.metric("judge verdict", verdict)
+                if loaded.get("integration") is not None:
+                    m2.metric("integration", loaded["integration"])
+                if loaded.get("stance_adopted") is not None:
+                    m3.metric("stance adopted", loaded["stance_adopted"])
+                if justification:
+                    with st.expander("Judge justification"):
+                        st.write(justification)
+            if loaded.get("command"):
+                st.code(loaded["command"], language="bash")
+            if st.button("Clear loaded experiment", help="discard the loaded preview"):
+                st.session_state.pop("loaded_experiment", None)
+                st.session_state.pop("loaded_prompt", None)
+                st.session_state.pop("loaded_target_output", None)
+                st.rerun()
 
-# Persist the last result across reruns (Streamlit reruns on widget change), so the
-# convergence view can be tweaked (which position to plot, top-k width) without rerunning
-# the model -- the trace is already in memory.
+    left, right = st.columns([3, 2], gap="large")
+
+    with left:
+        # 1. Target output -- the desired final text we want to steer toward. Shown
+        # first because that's the framing: "this is what I want to come out."
+        st.markdown("#### 1. Target output")
+        st.caption(
+            "The text snippet you want the model to produce. This is the *goal* of the "
+            "steer -- the **Targets** table below is how you encode it (which tokens "
+            "land at which positions, and on which denoising steps)."
+        )
+        # `loaded_target_output` is set by the uploader; treat it as a one-shot
+        # initializer so subsequent edits aren't clobbered when the user types.
+        target_default = st.session_state.pop(
+            "loaded_target_output",
+            st.session_state.get("target_output_text", "Yes, a hot dog is a sandwich."),
+        )
+        target_output = st.text_area(
+            "target output", label_visibility="collapsed",
+            value=target_default,
+            height=90,
+            key=f"target_output_text_{st.session_state.get('prompt_text_nonce', 0)}",
+        )
+        st.session_state["target_output_text"] = target_output
+
+        # 2. Prompt sent to the model.
+        st.markdown("#### 2. Prompt")
+        st.caption("The user message the model sees. The baseline runs against this verbatim.")
+        prompt_default = st.session_state.pop(
+            "loaded_prompt",
+            st.session_state.get(
+                "prompt_text",
+                "Is a hot dog a sandwich? Give a one-word verdict (Yes or No), then explain.",
+            ),
+        )
+        prompt = st.text_area(
+            "prompt", label_visibility="collapsed",
+            value=prompt_default,
+            height=110,
+            key=f"prompt_text_{st.session_state.get('prompt_text_nonce', 0)}",
+        )
+        st.session_state["prompt_text"] = prompt
+
+        # 3. Per-token interventions.
+        st.markdown("#### 3. Targets (interventions)")
+        st.caption(
+            "Each row is one intervention. **target string** = the text being forced into "
+            "the canvas; **start_pos** = its first token position; **mode** = `pin` "
+            "(hard freeze) or `perturb` (one-shot nudge); **step** = the denoising step "
+            "(0..~47) at which it fires. Multiple rows = staggered/multi-target steers. "
+            "Click 🗑 on any row to delete it."
+        )
+        targets_df = targets_editor()
+
+    with right:
+        st.markdown("#### Sampling")
+        k = st.number_input(
+            "k (top-k width)", min_value=1, value=1, step=1,
+            help="1 = hard freeze on the target; ≥2 spreads residual mass across runner-ups",
+        )
+        prob = st.number_input(
+            "prob (mass on target; 0 = hard pin)",
+            min_value=0.0, max_value=1.0, value=0.0, step=0.05,
+            help="0 = leave probabilities unset (hard pin). >0 sets per-token mass.",
+        )
+
+        st.markdown("#### What this does")
+        st.markdown(
+            "- A **baseline** generation runs first (no steering).\n"
+            "- Then the **steered** generation runs with your targets pinned at the "
+            "specified positions and steps, aiming at the **target output** above.\n"
+            "- The server returns a per-step **trace** of the top-k tokens at every "
+            "traced position; the **Convergence** tab visualizes that.\n"
+            "- You can also **load an experiment** from a JSON file at the top of "
+            "this tab to populate prompt + targets in one click."
+        )
+        st.info("Click **Run experiment** in the sidebar →", icon="▶")
+
+# --- RUN --------------------------------------------------------------------
 if run:
     df = targets_df.dropna(subset=["target"]).copy()
     df = df[df["target"].astype(str).str.len() > 0]
     if df.empty:
-        st.error("Add at least one target row.")
+        st.error("Add at least one target row in the Setup tab.")
         st.stop()
 
     targets = df["target"].astype(str).tolist()
@@ -323,7 +649,6 @@ if run:
     with st.spinner("Calling server..."):
         try:
             base = steer_call(prompt, tokens=[], positions=[], seed=int(seed), **where)
-            # Pre-compute the trace_positions list so unsteered positions can be tracked too.
             steered_positions: list[int] = []
             for tgt, sp in zip(targets, start_pos):
                 ids = tokenizer.encode(tgt, add_special_tokens=False)
@@ -340,7 +665,7 @@ if run:
                 seed=int(seed),
                 **where,
             )
-        except Exception as exc:  # noqa: BLE001 - surface the server error to the user
+        except Exception as exc:  # noqa: BLE001
             st.error(f"Server call failed: {exc}")
             st.code(traceback.format_exc())
             st.stop()
@@ -348,6 +673,7 @@ if run:
     decoded = decode_trace(result.get("trace", []), tokenizer) if result.get("trace") else []
     landed = "".join(o["actual_token"] for o in result["interventions"])
     st.session_state["last_run"] = {
+        "target_output": target_output,
         "prompt": prompt,
         "baseline": base["text"],
         "steered": result["text"],
@@ -363,147 +689,433 @@ if run:
             "k": int(k), "prob": prob, "seed": int(seed),
         },
     }
+    st.toast("Run complete -- see the Results / Convergence tabs.", icon="✅")
 
 last = st.session_state.get("last_run")
-if last is None:
-    st.info("Configure the prompt + targets and click **Run experiment**.")
-    st.stop()
 
-# --- Output ----------------------------------------------------------------
-st.divider()
-left, right = st.columns(2)
-with left:
-    st.subheader("Baseline (no steering)")
-    st.write(last["baseline"])
-with right:
-    st.subheader("Steered")
-    st.write(last["steered"])
-
-st.subheader("Pinned tokens")
-held_badge = "✅ all_held" if last["all_held"] else "⚠️ NOT all held"
-st.markdown(
-    f"Steering acted on token positions **{last['positions']}**, and what actually "
-    f"landed there in the final canvas was **`{last['landed']!r}`**. "
-    f"&nbsp;·&nbsp; **{held_badge}** -- whether every pin survived denoising."
-)
-st.caption(
-    "Read this as: *\"I asked for these tokens at these positions; here's what came out.\"* "
-    "If `all_held` is ✅, the attack stuck verbatim; if ⚠️, the model overrode at least one pin."
-)
-
-with st.expander("Raw interventions"):
-    st.dataframe(pd.DataFrame(last["interventions"]), use_container_width=True)
-
-# --- Convergence visualization --------------------------------------------
-decoded = last["decoded"]
-if not decoded:
-    st.info("No trace was recorded -- nothing to visualize.")
-    st.stop()
-
-st.divider()
-st.header("Convergence of the denoising loop")
-st.caption(
-    "DiffusionGemma denoises the whole canvas jointly over ~48 steps. These charts show "
-    "what the sampler saw at each traced position on each step -- so you can watch a "
-    "pin commit instantly and the surrounding tokens collapse onto a final answer."
-)
-
-# --- Denoising film-strip ---------------------------------------------------
-# Renders every step as an inline canvas of tokens, where each token's opacity and
-# blur reflect the model's top-1 probability at that position. Early steps -> blurry,
-# faint, "unsure" looking; late steps -> crisp, bold, "committed" looking. The result
-# is a visceral sense of the model steering itself toward an answer.
-st.markdown("### Denoising film-strip -- watch the canvas sharpen step by step")
-st.caption(
-    "Each row is one denoising step. Token **opacity** = top-1 probability, **blur** "
-    "fades as the model commits. Blue-tinted tokens are at steered (pinned) positions. "
-    "Early rows look hazy because the model is still unsure; late rows look crisp because "
-    "every position has locked onto a winner."
-)
-all_steps = sorted({rec["step_idx"] for rec in decoded})
-all_positions = sorted({int(p) for rec in decoded for p in rec["positions"]})
-steered_set = set(last["positions"])
-if all_steps and all_positions:
-    # Sample steps so the strip stays readable on long runs (~48 steps): show every
-    # step up to ~24, otherwise stride. The user can also scrub to a specific step below.
-    stride = max(1, len(all_steps) // 24)
-    sampled = all_steps[::stride]
-    if all_steps[-1] not in sampled:
-        sampled.append(all_steps[-1])
-    rows_html = []
-    for s in sampled:
-        canvas = _step_canvas_html(decoded, s, all_positions, steered_set)
-        rows_html.append(
-            f"<div style='display:flex;align-items:center;gap:10px;"
-            f"padding:4px 6px;border-bottom:1px solid #eee;font-family:monospace;font-size:14px'>"
-            f"<div style='width:64px;color:#888;font-size:11px'>step {s:>3}</div>"
-            f"<div>{canvas}</div></div>"
-        )
-    st.markdown(
-        "<div style='border:1px solid #e3e3e3;border-radius:6px;padding:4px;"
-        "background:#fafafa;max-height:520px;overflow-y:auto'>"
-        + "".join(rows_html) +
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    # Step scrubber: pick any step and see the full canvas at native size, no stride.
-    st.markdown("**Scrub to a single step** (full canvas, no sampling)")
-    pick = st.slider(
-        "denoising step",
-        min_value=int(all_steps[0]), max_value=int(all_steps[-1]),
-        value=int(all_steps[0]), step=1,
-    )
-    full = _step_canvas_html(decoded, int(pick), all_positions, steered_set)
-    st.markdown(
-        f"<div style='border:1px solid #e3e3e3;border-radius:6px;padding:14px;"
-        f"background:#fff;font-family:monospace;font-size:18px;line-height:1.8'>{full}</div>",
-        unsafe_allow_html=True,
-    )
-
-st.divider()
-st.markdown("### Per-position telemetry")
-
-traj = trajectory_frame(decoded)
-st.markdown("**Top-1 token trajectory per traced position** (one column per denoising step)")
-st.dataframe(traj, use_container_width=True)
-
-probs = top1_prob_frame(decoded)
-st.markdown("**Top-1 probability over denoising steps** (per traced position)")
-st.line_chart(probs, height=320)
-
-st.markdown("**Top-k probability stack at one position** -- watch competing tokens decay")
-positions_seen = sorted({int(p) for rec in decoded for p in rec["positions"]})
-focus = st.selectbox(
-    "position to inspect", positions_seen,
-    index=0 if positions_seen else None,
-    format_func=lambda p: f"pos {p}" + ("  (steered)" if p in last["positions"] else ""),
-)
-focus_topk = st.slider("top-k width", min_value=2, max_value=int(trace_topk), value=min(5, int(trace_topk)))
-if focus is not None:
-    topk_df = topk_at_position_frame(decoded, int(focus), focus_topk)
-    if topk_df.empty:
-        st.info(f"No trace at position {focus}.")
+# --- RESULTS TAB ------------------------------------------------------------
+with tab_results:
+    if last is None:
+        st.info("No run yet. Configure on **Setup**, then click **Run experiment** in the sidebar.")
     else:
-        st.area_chart(topk_df, height=320)
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Pinned positions", len(last["positions"]))
+        c2.metric("Landed text", repr(last["landed"]))
+        c3.metric("All pins held?", "✅ yes" if last["all_held"] else "⚠️ no")
 
-# --- Export ---------------------------------------------------------------
-st.divider()
-payload = {
-    "prompt": last["prompt"],
-    "config": last["config"],
-    "baseline": last["baseline"],
-    "steered": last["steered"],
-    "landed": last["landed"],
-    "positions": last["positions"],
-    "all_held": last["all_held"],
-    "interventions": last["interventions"],
-    "trace_positions": last["trace_positions"],
-    "trace": decoded,
-}
-st.download_button(
-    "Download run as JSON",
-    data=json.dumps(payload, indent=2),
-    file_name="streamlit_run.json",
-    mime="application/json",
-)
+        st.divider()
+        L, R = st.columns(2, gap="large")
+        with L:
+            st.markdown("#### Baseline (no steering)")
+            st.write(last["baseline"])
+        with R:
+            st.markdown("#### Steered")
+            st.write(last["steered"])
+
+        st.divider()
+        st.markdown("#### Pin survival")
+        st.markdown(
+            f"Steering acted on token positions **{last['positions']}**, and what "
+            f"actually landed there in the final canvas was **`{last['landed']!r}`**."
+        )
+        st.caption(
+            "If `all_held` is ✅, the attack stuck verbatim. If ⚠️, the model overrode "
+            "at least one pin -- inspect the raw interventions table below to see which."
+        )
+
+        with st.expander("Raw interventions"):
+            st.dataframe(pd.DataFrame(last["interventions"]), use_container_width=True)
+
+        # Export tucked into Results since it's a result artifact.
+        st.divider()
+        decoded_for_export = last["decoded"]
+        payload = {
+            "target_output": last.get("target_output", ""),
+            "prompt": last["prompt"],
+            "config": last["config"],
+            "baseline": last["baseline"],
+            "steered": last["steered"],
+            "landed": last["landed"],
+            "positions": last["positions"],
+            "all_held": last["all_held"],
+            "interventions": last["interventions"],
+            "trace_positions": last["trace_positions"],
+            "trace": decoded_for_export,
+        }
+        st.download_button(
+            "⬇ Download run as JSON",
+            data=json.dumps(payload, indent=2),
+            file_name="streamlit_run.json",
+            mime="application/json",
+        )
+
+# --- CONVERGENCE TAB --------------------------------------------------------
+with tab_converge:
+    if last is None or not last["decoded"]:
+        st.info("Run an experiment with tracing enabled to see the convergence view.")
+    else:
+        decoded = last["decoded"]
+        all_steps = sorted({rec["step_idx"] for rec in decoded})
+        all_positions = sorted({int(p) for rec in decoded for p in rec["positions"]})
+        steered_set = set(last["positions"])
+
+        st.caption(
+            "DiffusionGemma denoises the whole canvas jointly over ~48 steps. Use the "
+            "**step** slider to scrub through denoising; the canvas on the left shows "
+            "every traced token at that step (opacity + sharpness ∝ confidence), and "
+            "the right pane shows the **probability distribution** over the top candidate "
+            "tokens at one focused position -- watch it narrow from spread-out to spike."
+        )
+
+        # --- Top controls: step + position pickers, side by side ----------
+        ctop1, ctop2 = st.columns([3, 2])
+        step = ctop1.slider(
+            "denoising step",
+            min_value=int(all_steps[0]), max_value=int(all_steps[-1]),
+            value=int(all_steps[-1]), step=1,
+        )
+        focus_pos = ctop2.selectbox(
+            "focused position (drives the right-pane distribution)",
+            all_positions,
+            index=len(all_positions) - 1,
+            format_func=lambda p: f"pos {p}" + ("  (steered)" if p in steered_set else ""),
+        )
+
+        # --- Two-pane main view: canvas | distribution --------------------
+        canvas_col, dist_col = st.columns([3, 2], gap="large")
+
+        with canvas_col:
+            st.markdown(f"##### Canvas at step {step}")
+            html = _step_canvas_html(decoded, step, all_positions, steered_set, focus=int(focus_pos))
+            st.markdown(
+                f"<div style='border:1px solid #e3e3e3;border-radius:8px;padding:18px;"
+                f"background:#fff;font-family:monospace;font-size:18px;line-height:1.9;"
+                f"min-height:160px'>{html}</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "Each glyph is one traced token position. Faint+blurred = the model is "
+                "still uncertain. Bold+sharp = it has committed. "
+                "<span style='color:#1f4ed8'>Blue</span> = steered (pinned). "
+                "<span style='color:#b91c1c'>Red box</span> = the focused position.",
+                unsafe_allow_html=True,
+            )
+
+        with dist_col:
+            st.markdown(f"##### Distribution at pos {focus_pos}, step {step}")
+            dist = distribution_at(decoded, step, int(focus_pos), int(trace_topk))
+            if dist.empty:
+                st.info("No trace at this (step, position).")
+            else:
+                # Horizontal bar chart -- bars sorted by probability so the winner is on
+                # top. Bar length is the actual probability (0..1) so cross-step comparison
+                # is honest: an "uncertain" step has all bars short; a "committed" step has
+                # one bar near 1.0 and the rest near 0.
+                top1_prob = float(dist["prob"].iloc[0])
+                # Shannon entropy over the top-k slice. Lower = more committed (a sharp
+                # winner), higher = more spread out (the model is still hedging).
+                entropy = -sum(p * math.log(max(p, 1e-12)) for p in dist["prob"])
+                m1, m2 = st.columns(2)
+                m1.metric("top-1 prob", f"{top1_prob:.3f}")
+                m2.metric("entropy", f"{entropy:.3f}",
+                          help="lower = more committed; higher = more uncertain")
+
+                chart = (
+                    alt.Chart(dist)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("prob:Q", scale=alt.Scale(domain=[0, 1]), title="probability"),
+                        y=alt.Y("display:N", sort="-x", title=None),
+                        color=alt.Color(
+                            "prob:Q",
+                            scale=alt.Scale(scheme="blues", domain=[0, 1]),
+                            legend=None,
+                        ),
+                        tooltip=[
+                            alt.Tooltip("token:N", title="token"),
+                            alt.Tooltip("prob:Q", title="prob", format=".4f"),
+                        ],
+                    )
+                    .properties(height=max(200, 26 * len(dist)))
+                )
+                st.altair_chart(chart, use_container_width=True)
+                st.caption(
+                    "Tokens shown with `·` for spaces and `⏎` for newlines so you can "
+                    "see whitespace candidates. Scrub the **step** slider above and "
+                    "watch the bars collapse onto the winner."
+                )
+
+        # --- Below the fold: streaming-process diagnostics ---------------
+        # Each chart answers a different question about the denoising. Tabs keep them
+        # navigable without making the page a giant scroll.
+        st.divider()
+        st.markdown("#### Streaming-process diagnostics")
+        st.caption(
+            "Five complementary views of the same trace. Each one answers a different "
+            "question about *how* the canvas converges, not just *what* it converges to."
+        )
+
+        d_overall, d_heat, d_commit, d_rank, d_churn, d_traj = st.tabs([
+            "① Overall uncertainty",
+            "② Entropy heatmap",
+            "③ Commitment timeline",
+            "④ Rank of final winner",
+            "⑤ Top-1 churn",
+            "⑥ Token trajectory table",
+        ])
+
+        # ① One-line headline: how unsure is the canvas overall, step by step?
+        with d_overall:
+            st.caption(
+                "**Question:** how chaotic is the canvas overall at each step? "
+                "Mean entropy across all traced positions = headline uncertainty; max "
+                "entropy = the worst still-undecided position. A clean run shows a "
+                "monotone descent; kinks reveal moments where the model rejected a "
+                "competing hypothesis. Pinned positions (entropy ≈ 0) drag mean down."
+            )
+            mean_df = mean_entropy_curve(decoded)
+            if not mean_df.empty:
+                long = mean_df.melt("step", var_name="metric", value_name="entropy")
+                line = (
+                    alt.Chart(long)
+                    .mark_line(point=True)
+                    .encode(
+                        x=alt.X("step:Q", title="denoising step"),
+                        y=alt.Y("entropy:Q", title="entropy (nats)"),
+                        color=alt.Color(
+                            "metric:N",
+                            scale=alt.Scale(
+                                domain=["mean_entropy", "max_entropy"],
+                                range=["#1f4ed8", "#b91c1c"],
+                            ),
+                            title=None,
+                        ),
+                        tooltip=["step", "metric", alt.Tooltip("entropy:Q", format=".3f")],
+                    )
+                    .properties(height=320)
+                )
+                # Vertical rule at the currently-selected scrubber step so this chart
+                # stays in sync with the upstream canvas/distribution view.
+                rule = alt.Chart(pd.DataFrame({"step": [step]})).mark_rule(
+                    color="#6b7280", strokeDash=[4, 3]
+                ).encode(x="step:Q")
+                st.altair_chart(line + rule, use_container_width=True)
+
+            # Bonus: per-position top-1 confidence lines, exact data, slightly different
+            # framing -- "is this position done yet?" Useful next to the entropy curve.
+            probs = top1_prob_frame(decoded)
+            if not probs.empty:
+                st.markdown("**Top-1 probability per traced position**")
+                st.caption(
+                    "One line per position. y = top-1 probability at that step. Hard "
+                    "pins read as flat 1.0 from step 0; unsteered positions climb."
+                )
+                st.line_chart(probs, height=260)
+
+        # ② 2D entropy: step × position. The "wave of commitment" view.
+        with d_heat:
+            st.caption(
+                "**Question:** which positions are unsure when? Each cell is the "
+                "entropy at one (step, position). Dark = uncertain, light = decided. "
+                "You see commitment ripple across positions, and you can spot regions "
+                "of the canvas that stayed contested longer than others."
+            )
+            ent_df = entropy_frame(decoded)
+            if not ent_df.empty:
+                heat = (
+                    alt.Chart(ent_df)
+                    .mark_rect()
+                    .encode(
+                        x=alt.X("step:O", title="denoising step"),
+                        y=alt.Y("position:O", title="token position", sort="ascending"),
+                        color=alt.Color(
+                            "entropy:Q",
+                            scale=alt.Scale(scheme="magma", reverse=True),
+                            title="entropy",
+                        ),
+                        tooltip=[
+                            "step", "position",
+                            alt.Tooltip("entropy:Q", format=".3f"),
+                        ],
+                    )
+                    .properties(height=max(220, 22 * len(all_positions)))
+                )
+                st.altair_chart(heat, use_container_width=True)
+
+        # ③ For each position, the first step where it crossed a confidence threshold.
+        with d_commit:
+            threshold = st.slider(
+                "commitment threshold (top-1 probability)",
+                min_value=0.5, max_value=0.99, value=0.9, step=0.01,
+                help="A position is 'committed' once top-1 ≥ this value at some step.",
+            )
+            st.caption(
+                "**Question:** in what order did the model lock in each position? "
+                "Each bar is one position; bar length = first step where top-1 ≥ "
+                "threshold. Positions that never cross the threshold are flagged. "
+                "Steered (pinned) positions usually commit at step 0; the spread of "
+                "the rest reveals how the diffusion resolves the canvas left-to-right, "
+                "in clusters, or randomly."
+            )
+            cf = commitment_frame(decoded, threshold=threshold)
+            if not cf.empty:
+                # Bin: committed (numeric step) vs never-committed (NaN -> render at max+1
+                # with a different color so they stay visible).
+                max_step = max(all_steps)
+                cf2 = cf.copy()
+                cf2["never"] = cf2["commit_step"].isna()
+                cf2["plot_step"] = cf2["commit_step"].fillna(max_step + 1)
+                cf2["pinned"] = cf2["position"].isin(steered_set)
+
+                bars = (
+                    alt.Chart(cf2)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("plot_step:Q", title="step at which top-1 crossed threshold"),
+                        y=alt.Y("position:O", sort="ascending", title="token position"),
+                        color=alt.Color(
+                            "never:N",
+                            scale=alt.Scale(domain=[False, True], range=["#1f4ed8", "#9ca3af"]),
+                            legend=alt.Legend(title=None,
+                                              labelExpr="datum.value ? 'never crossed' : 'committed'"),
+                        ),
+                        tooltip=[
+                            "position",
+                            alt.Tooltip("commit_step:Q", title="commit step"),
+                            alt.Tooltip("final_token:N", title="final token"),
+                            alt.Tooltip("final_prob:Q", format=".3f", title="final prob"),
+                            alt.Tooltip("pinned:N", title="steered?"),
+                        ],
+                    )
+                    .properties(height=max(220, 22 * len(cf2)))
+                )
+                # Mark pinned positions with a small dot so you can spot them on the chart.
+                pin_dots = (
+                    alt.Chart(cf2[cf2["pinned"]])
+                    .mark_point(filled=True, size=80, shape="diamond", color="#f59e0b")
+                    .encode(x=alt.value(2), y="position:O",
+                            tooltip=[alt.Tooltip("position:O", title="pinned position")])
+                )
+                st.altair_chart(bars + pin_dots, use_container_width=True)
+                st.caption(
+                    "🔶 diamond = pinned position. Grey bar = position never reached the "
+                    "threshold (rendered just past the last step for visibility)."
+                )
+
+        # ④ For each position, the rank of the final-winning token over time.
+        with d_rank:
+            st.caption(
+                "**Question:** when did the eventual answer first show up? At each "
+                "step, we look up the rank of the *finally chosen* token at every "
+                "position. A line that starts at rank 1 means the model knew from the "
+                "start; a line that descends from rank 5→4→...→1 means it actively "
+                "swapped its mind. Lines pinned to rank 1 from step 0 are likely steered."
+            )
+            rk = final_rank_frame(decoded)
+            if not rk.empty:
+                # Highlight the focused position; others go light grey so the chart is
+                # legible even with many lines.
+                rk = rk.copy()
+                rk["highlight"] = rk["position"] == int(focus_pos)
+                lines = (
+                    alt.Chart(rk)
+                    .mark_line(interpolate="step-after")
+                    .encode(
+                        x=alt.X("step:Q", title="denoising step"),
+                        y=alt.Y("rank:Q", title="rank of final-winning token (1 = top)",
+                                scale=alt.Scale(reverse=True)),
+                        detail="position:N",
+                        color=alt.Color(
+                            "highlight:N",
+                            scale=alt.Scale(domain=[True, False], range=["#b91c1c", "#cbd5e1"]),
+                            legend=None,
+                        ),
+                        size=alt.Size(
+                            "highlight:N",
+                            scale=alt.Scale(domain=[True, False], range=[3, 1]),
+                            legend=None,
+                        ),
+                        tooltip=["step", "position", "rank"],
+                    )
+                    .properties(height=320)
+                )
+                st.altair_chart(lines, use_container_width=True)
+                st.caption(
+                    f"Red line = focused position ({int(focus_pos)}). Lines ride near "
+                    "the top (rank 1) only after the model has decided this position. "
+                    "Y-axis is reversed: rank 1 (the eventual winner) is on top."
+                )
+
+        # ⑤ How many distinct tokens ever won top-1, per position.
+        with d_churn:
+            st.caption(
+                "**Question:** which positions were the model most uncertain about? "
+                "Bar = the count of *distinct* tokens that ever held top-1 at this "
+                "position across the whole run. 1 = decided from step 0 and never "
+                "moved. 5+ = the model thrashed -- often interesting to look at "
+                "neighbors of pinned positions, where the steer is reshaping context."
+            )
+            ch = churn_frame(decoded)
+            if not ch.empty:
+                ch = ch.copy()
+                ch["pinned"] = ch["position"].isin(steered_set)
+                bars = (
+                    alt.Chart(ch)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("distinct_top1:Q", title="# distinct tokens that held top-1"),
+                        y=alt.Y("position:O", sort="ascending", title="token position"),
+                        color=alt.Color(
+                            "pinned:N",
+                            scale=alt.Scale(domain=[True, False], range=["#1f4ed8", "#94a3b8"]),
+                            legend=alt.Legend(title=None,
+                                              labelExpr="datum.value === 'true' ? 'steered' : 'free'"),
+                        ),
+                        tooltip=[
+                            "position",
+                            alt.Tooltip("distinct_top1:Q", title="churn"),
+                            "pinned",
+                        ],
+                    )
+                    .properties(height=max(220, 22 * len(ch)))
+                )
+                st.altair_chart(bars, use_container_width=True)
+
+        # ⑥ The original token-trajectory table -- still the ground-truth lookup.
+        with d_traj:
+            st.caption(
+                "**Question:** what token was on top at each (position, step)? "
+                "Heatmap-style table -- rows = positions, columns = steps. Use this "
+                "as a ground-truth lookup when one of the charts above raises a question."
+            )
+            traj = trajectory_frame(decoded)
+            st.dataframe(traj, use_container_width=True)
+
+        st.markdown("#### Film-strip (sampled steps)")
+        st.caption(
+            "A condensed, scrollable view of the whole denoising loop -- one row per "
+            "sampled step. Same opacity + blur encoding as the main canvas."
+        )
+        # Stride to keep ~24 rows max; always include the last step.
+        stride = max(1, len(all_steps) // 24)
+        sampled = all_steps[::stride]
+        if all_steps[-1] not in sampled:
+            sampled.append(all_steps[-1])
+        rows_html = []
+        for s in sampled:
+            canvas = _step_canvas_html(decoded, s, all_positions, steered_set, focus=int(focus_pos))
+            highlight = "background:#fff7d6;" if s == step else ""
+            rows_html.append(
+                f"<div style='display:flex;align-items:center;gap:10px;"
+                f"padding:4px 6px;border-bottom:1px solid #eee;{highlight}"
+                f"font-family:monospace;font-size:13px'>"
+                f"<div style='width:64px;color:#888;font-size:11px'>step {s:>3}</div>"
+                f"<div>{canvas}</div></div>"
+            )
+        st.markdown(
+            "<div style='border:1px solid #e3e3e3;border-radius:6px;padding:4px;"
+            "background:#fafafa;max-height:480px;overflow-y:auto'>"
+            + "".join(rows_html)
+            + "</div>",
+            unsafe_allow_html=True,
+        )
