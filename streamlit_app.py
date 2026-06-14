@@ -22,6 +22,7 @@ import traceback
 import altair as alt
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from client import steer as steer_call
 from example_steer import decode_trace, load_tokenizer, steer_strings
@@ -329,6 +330,80 @@ _CANVAS_GREEN = (22, 163, 74)   # super green at p=1 (confident, natural)
 _CANVAS_BLUE = (37, 99, 235)    # injected / pinned position
 
 
+def _render_canvas_iframe(inner_html: str, *, height: int, frame_style: str) -> None:
+    """Render canvas HTML inside a components iframe with a click handler.
+
+    Token clicks navigate the *parent* page to `?focus=N&step=M`. That triggers a
+    full Streamlit page reload — but the most recent run is auto-restored from
+    `frontend_runs/*.json` on page-load (see `_autoload_last_run`), so to the user
+    it just looks like the focus dropdown moved. This is the most robust approach
+    given Streamlit's iframe sandboxing: programmatic URL changes via
+    `pushState`+`popstate` are not reliably picked up by Streamlit's frontend, but
+    a real navigation always is.
+    """
+    doc = f"""
+<!doctype html>
+<html><head><style>
+  :root{{
+    color-scheme:light dark;
+    --df-fg:#111827; --df-muted:#6b7280; --df-border:rgba(0,0,0,0.08);
+  }}
+  @media (prefers-color-scheme: dark) {{
+    :root{{
+      --df-fg:#e5e7eb; --df-muted:#9ca3af; --df-border:rgba(255,255,255,0.12);
+    }}
+  }}
+  html,body{{margin:0;padding:0;background:transparent;color:var(--df-fg);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}}
+  .df-frame{{{frame_style}}}
+  .df-tok{{transition:outline 80ms;}}
+  .df-tok:hover{{outline:2px solid #6366f1; outline-offset:1px;}}
+</style></head>
+<body>
+  <div class="df-frame">{inner_html}</div>
+  <script>
+    document.addEventListener('click', (ev) => {{
+      const el = ev.target.closest('.df-tok');
+      if (!el) return;
+      const pos = el.getAttribute('data-pos');
+      if (pos === null) return;
+      // Navigate the parent: rewrites the URL with ?focus=N (preserving the
+      // current step query param if present). Streamlit reruns; the Python side
+      // reads st.query_params and the auto-restore brings `last_run` back from
+      // disk so the UI just shows the new focus.
+      const url = new URL(window.parent.location.href);
+      url.searchParams.set('focus', String(parseInt(pos, 10)));
+      window.parent.location.href = url.toString();
+    }}, true);
+  </script>
+</body></html>
+"""
+    components.html(doc, height=height, scrolling=False)
+
+
+def _autoload_last_run() -> bool:
+    """If session_state has no `last_run`, try to restore the most recent
+    `frontend_runs/*.json`. Returns True iff a run was restored."""
+    if "last_run" in st.session_state:
+        return False
+    runs_dir = os.path.join(os.path.dirname(__file__), "frontend_runs")
+    if not os.path.isdir(runs_dir):
+        return False
+    files = sorted(
+        glob.glob(os.path.join(runs_dir, "*.json")),
+        key=os.path.getmtime, reverse=True,
+    )
+    if not files:
+        return False
+    try:
+        with open(files[0]) as f:
+            payload = json.load(f)
+    except Exception:  # noqa: BLE001
+        return False
+    ok, _ = _load_run_for_viz(payload)
+    return ok
+
+
 def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
                       steered_positions: set[int], focus: int | None = None) -> str:
     rec = next((r for r in decoded if r["step_idx"] == step_idx), None)
@@ -342,17 +417,13 @@ def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
     spans: list[str] = []
     for pos in positions:
         cands = rec["positions"].get(pos, [])
-        # Anchor wraps each cell so a click sets ?focus=N, which the script reads on
-        # rerun to drive the right-pane distribution dropdown. `#canvas-anchor` keeps
-        # the page from jumping back to the top after the rerun. `target="_top"` is
-        # critical: Streamlit renders unsafe_allow_html inside a sandboxed iframe, so
-        # without it the navigation happens *inside the iframe* and Streamlit never
-        # sees the new query param.
-        href = f"?focus={pos}#canvas-anchor"
+        # Each cell carries `data-pos` so the iframe-level click listener (installed by
+        # `_canvas_click_bridge`) can read which position was clicked and forward it to
+        # the parent page as a query-param + popstate, which Streamlit reruns on.
         if not cands:
             spans.append(
-                f"<a href='{href}' target='_top' style='text-decoration:none;'>"
-                f"<span style='opacity:.4;color:var(--df-muted)'>·</span></a>"
+                f"<span class='df-tok' data-pos='{pos}' "
+                f"style='cursor:pointer;opacity:.4;color:var(--df-muted)'>·</span>"
             )
             continue
 
@@ -396,11 +467,10 @@ def _step_canvas_html(decoded: list[dict], step_idx: int, positions: list[int],
             title = f"pos {pos} · p={post_prob:.2f}"
 
         spans.append(
-            f"<a href='{href}' target='_top' style='text-decoration:none;cursor:pointer;'>"
-            f"<span title='{title}' "
-            f"style='display:inline-block;margin:1px;padding:1px 4px;"
+            f"<span class='df-tok' data-pos='{pos}' title='{title}' "
+            f"style='display:inline-block;margin:1px;padding:1px 4px;cursor:pointer;"
             f"font-weight:{weight};color:{txt};border:{border};border-radius:3px;"
-            f"background:{bg}'>{display}</span></a>"
+            f"background:{bg}'>{display}</span>"
         )
     return "".join(spans)
 
@@ -904,6 +974,11 @@ with st.sidebar:
 TABS = ["Setup", "Results", "Convergence"]
 if "_pending_tab" in st.session_state:
     st.session_state["active_tab"] = st.session_state.pop("_pending_tab")
+# A `?focus=N` in the URL means the user just clicked a token in the canvas and
+# the page reloaded — auto-route them to the Convergence tab so they see the
+# distribution for the position they clicked, not the Setup form.
+if st.query_params.get("focus") is not None:
+    st.session_state["active_tab"] = "Convergence"
 active_tab = st.session_state.get("active_tab", "Setup")
 
 # The tab buttons are scoped via their explicit `key="tab_btn_<name>"`; the matching
@@ -1253,6 +1328,10 @@ if submitted:
     st.session_state["_pending_tab"] = "Results"
     st.rerun()
 
+# If the page just reloaded after a token click in the Convergence canvas, the
+# session is fresh — restore the most-recent saved run from disk so the click
+# round-trip looks instant rather than wiping the screen.
+_autoload_last_run()
 last = st.session_state.get("last_run")
 
 # ---------------------------------------------------------------------------
@@ -1375,10 +1454,12 @@ if active_tab == "Convergence":
             "tokens at one focused position -- watch it narrow from spread-out to spike."
         )
 
-        # If the user clicked a token in the canvas/film-strip, the rerun arrives
+        # If the user clicked a token in the canvas/film-strip, the page reloaded
         # with ?focus=N. Consume it into session_state so the selectbox below picks
-        # it up, then clear the query param so a future browser refresh doesn't
-        # silently re-pin the same focus.
+        # it up. We deliberately leave the param in the URL: deleting it via
+        # `st.query_params` is a state mutation that triggers another rerun, and
+        # the param is harmless to keep around (a refresh just re-pins the same
+        # already-applied focus).
         qp_focus = st.query_params.get("focus")
         if qp_focus is not None:
             try:
@@ -1387,10 +1468,6 @@ if active_tab == "Convergence":
                 wanted = None
             if wanted is not None and wanted in all_positions:
                 st.session_state["focus_pos_widget"] = wanted
-            try:
-                del st.query_params["focus"]
-            except KeyError:
-                pass
 
         # Anchor target so the post-click rerun keeps the canvas in view rather than
         # scrolling back to the top of the page.
@@ -1428,12 +1505,22 @@ if active_tab == "Convergence":
         with canvas_col:
             st.markdown(f"##### Canvas at step {step}")
             html = _step_canvas_html(decoded, step, all_positions, steered_set, focus=int(focus_pos))
-            st.markdown(
-                f"<div style='border:1px solid var(--df-canvas-frame);border-radius:8px;"
-                f"padding:18px;background:var(--df-canvas-bg);font-family:monospace;"
-                f"font-size:18px;line-height:1.9;min-height:160px;color:var(--df-fg)'>"
-                f"{html}</div>",
-                unsafe_allow_html=True,
+            # Each cell is ~28px wide at the rendered font size; estimate how many
+            # rows the canvas wraps to so the iframe is tall enough to show all of
+            # them without an internal scrollbar.
+            est_rows = max(1, math.ceil(len(all_positions) * 28 / 720))
+            canvas_height = max(180, 36 + est_rows * 38)
+            _render_canvas_iframe(
+                html,
+                height=min(canvas_height, 700),
+                frame_style=(
+                    "border:1px solid #e3e3e3;border-radius:8px;padding:18px;"
+                    "background:#fff;font-family:monospace;font-size:18px;"
+                    "line-height:1.9;min-height:160px;color:#111;"
+                    # The iframe sees `prefers-color-scheme` independently from the
+                    # parent; this opt-in lets `light-dark()` in the cell colors work.
+                    "color-scheme:light dark;"
+                ),
             )
             st.caption(
                 "Each glyph is the most-likely token at one position. "
@@ -1769,19 +1856,24 @@ if active_tab == "Convergence":
         rows_html = []
         for s in sampled:
             canvas = _step_canvas_html(decoded, s, all_positions, steered_set, focus=int(focus_pos))
-            highlight = "background:var(--df-strip-highlight);" if s == step else ""
+            highlight = "background:#fff7d6;" if s == step else ""
             rows_html.append(
                 f"<div style='display:flex;align-items:center;gap:10px;"
-                f"padding:4px 6px;border-bottom:1px solid var(--df-strip-row-border);"
-                f"{highlight}font-family:monospace;font-size:13px;color:var(--df-fg)'>"
-                f"<div style='width:64px;color:var(--df-muted);font-size:11px'>"
+                f"padding:4px 6px;border-bottom:1px solid #eee;"
+                f"{highlight}font-family:monospace;font-size:13px'>"
+                f"<div style='width:64px;color:#888;font-size:11px'>"
                 f"step {s:>3}</div>"
                 f"<div>{canvas}</div></div>"
             )
-        st.markdown(
-            "<div style='border:1px solid var(--df-canvas-frame);border-radius:6px;padding:4px;"
-            "background:var(--df-strip-bg);max-height:480px;overflow-y:auto'>"
-            + "".join(rows_html)
-            + "</div>",
-            unsafe_allow_html=True,
+        # Film-strip lives in the same iframe as the main canvas so token clicks
+        # there route through the same postMessage → ?focus=N → rerun pipeline.
+        # Generous height; iframe scrolls internally via the wrapping `.df-frame`.
+        _render_canvas_iframe(
+            "".join(rows_html),
+            height=min(520, 36 * len(sampled) + 40),
+            frame_style=(
+                "border:1px solid #e3e3e3;border-radius:6px;padding:4px;"
+                "background:#fafafa;max-height:480px;overflow-y:auto;"
+                "color-scheme:light dark;"
+            ),
         )
