@@ -437,6 +437,10 @@ with st.sidebar:
 
 # --- Top tab nav (radio styled as tabs; programmatic switch on run) -------
 TABS = ["Setup", "Results", "Convergence"]
+# A successful run sets _pending_tab; we consume it here, before the widget
+# is instantiated, so we never write to the widget's own key after creation.
+if "_pending_tab" in st.session_state:
+    st.session_state["active_tab"] = st.session_state.pop("_pending_tab")
 active_tab = st.radio(
     "view", TABS,
     index=TABS.index(st.session_state.get("active_tab", "Setup")),
@@ -641,7 +645,7 @@ if submitted:
         },
     }
     # Auto-switch to the Results tab on a successful run.
-    st.session_state["active_tab"] = "Results"
+    st.session_state["_pending_tab"] = "Results"
     st.rerun()
 
 last = st.session_state.get("last_run")
