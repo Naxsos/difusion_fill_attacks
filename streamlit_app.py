@@ -621,7 +621,7 @@ with st.sidebar:
         use_container_width=True,
         help="Reset prompt and targets back to defaults. Last run and log are kept.",
     )
-    if st.button("➕ New run", use_container_width=True,
+    if st.button("➕ New run", type="primary", use_container_width=True,
                  help="Switch to Setup tab. Your prompt and targets are kept."):
         st.session_state["active_tab"] = "Setup"
         st.rerun()
@@ -800,7 +800,12 @@ if active_tab == "Setup":
 
     st.markdown("#### Prompt")
     st.text_area(
-        "--prompt", height=90, label_visibility="collapsed", key="prompt_text",
+        "--prompt", height=90, label_visibility="collapsed",
+        value=st.session_state["prompt_text"],
+        key="_prompt_widget",
+        on_change=lambda: st.session_state.update(
+            prompt_text=st.session_state["_prompt_widget"]
+        ),
     )
 
     st.markdown("#### Targets")
