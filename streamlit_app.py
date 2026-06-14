@@ -1489,66 +1489,34 @@ if active_tab == "Convergence":
                 unsafe_allow_html=True,
             )
 
-        # If the user clicked a token in the canvas/film-strip, the page reloaded
-        # with ?focus=N. Consume it into session_state so the selectbox below picks
-        # it up. We deliberately leave the param in the URL: deleting it via
-        # `st.query_params` is a state mutation that triggers another rerun, and
-        # the param is harmless to keep around (a refresh just re-pins the same
-        # already-applied focus).
-        qp_focus = st.query_params.get("focus")
-        if qp_focus is not None:
-            try:
-                wanted = int(qp_focus)
-            except (TypeError, ValueError):
-                wanted = None
-            if wanted is not None and wanted in all_positions:
-                st.session_state["focus_pos_widget"] = wanted
+        slider_step = st.number_input(
+            "Slider step size", min_value=1, max_value=int(all_steps[-1]),
+            value=st.session_state.get("slider_step_val", 5), step=1,
+            help="How many denoising steps the slider jumps per tick.",
+            key="slider_step_val",
+        )
 
-        # Wrap the slider-driven view in a fragment so the step slider, focus
-        # selector, and commitment-threshold slider rerun ONLY this block instead
-        # of the whole app — that's what makes scrubbing feel live (the canvas /
-        # distribution / charts update on every drag tick rather than only after
-        # the user releases).
+        # Wrap the slider-driven view in a fragment so the step slider and
+        # commitment-threshold slider rerun ONLY this block instead of the whole
+        # app — that's what makes scrubbing feel live.
         @st.fragment
         def _convergence_view():
             # Anchor target so the post-click rerun keeps the canvas in view rather than
             # scrolling back to the top of the page.
             st.markdown("<div id='canvas-anchor'></div>", unsafe_allow_html=True)
 
-            ctop1, ctop2 = st.columns([3, 2])
-            # Persist the step across reruns triggered by token clicks (see ?focus=N
-            # below) — without a key, the slider would snap back to the default each
-            # time the user clicked a canvas token.
             if "step_widget" not in st.session_state:
                 st.session_state["step_widget"] = int(all_steps[-1])
             elif not (int(all_steps[0]) <= st.session_state["step_widget"] <= int(all_steps[-1])):
                 st.session_state["step_widget"] = int(all_steps[-1])
-            step = ctop1.slider(
+            step = st.slider(
                 "denoising step",
                 min_value=int(all_steps[0]), max_value=int(all_steps[-1]),
-                step=1, key="step_widget",
-            )
-            # Default the dropdown to the last position on first render; thereafter it's
-            # driven by `focus_pos_widget` (either user-selected or set from ?focus=N).
-            if "focus_pos_widget" not in st.session_state:
-                st.session_state["focus_pos_widget"] = all_positions[-1]
-            elif st.session_state["focus_pos_widget"] not in all_positions:
-                # Loaded a different run -- positions changed; fall back to the last one.
-                st.session_state["focus_pos_widget"] = all_positions[-1]
-            focus_pos = ctop2.selectbox(
-                "focused position (drives the right-pane distribution)",
-                all_positions,
-                key="focus_pos_widget",
-                format_func=lambda p: f"pos {p}" + ("  (steered)" if p in steered_set else ""),
+                step=int(st.session_state.get("slider_step_val", 5)), key="step_widget",
             )
 
-            # Canvas first — right under the slider so scrubbing the step
-            # immediately updates the token grid the user is watching. Full page
-            # width so longer outputs read in fewer rows.
             st.markdown(f"##### Canvas at step {step}")
-            canvas_html = _step_canvas_html(decoded, step, all_positions, steered_set, focus=int(focus_pos))
-            # Tall, always-scrollable iframe — content of any size stays
-            # reachable via the iframe's own vertical scrollbar.
+            canvas_html = _step_canvas_html(decoded, step, all_positions, steered_set)
             _render_canvas_iframe(
                 canvas_html,
                 height=820,
@@ -1556,8 +1524,6 @@ if active_tab == "Convergence":
                     "border:1px solid #e3e3e3;border-radius:8px;padding:18px;"
                     "background:#fff;font-family:monospace;font-size:18px;"
                     "line-height:1.9;color:#111;"
-                    # The iframe sees `prefers-color-scheme` independently from the
-                    # parent; this opt-in lets `light-dark()` in the cell colors work.
                     "color-scheme:light dark;"
                 ),
                 scrolling=True,
@@ -1570,103 +1536,9 @@ if active_tab == "Convergence":
                 "<span style='background:rgb(22,163,74);color:#fff;padding:0 3px;border-radius:3px'>"
                 "super green</span> = committed (p≈1). "
                 "<span style='background:rgb(37,99,235);color:#fff;padding:0 3px;border-radius:3px'>"
-                "Blue</span> = injected/pinned (dashed border = steered this very step). "
-                "<span style='color:#ef4444'>Red box</span> = the focused position.",
+                "Blue</span> = injected/pinned (dashed border = steered this very step).",
                 unsafe_allow_html=True,
             )
-
-            st.divider()
-            # Distribution charts below the canvas.
-            st.markdown(f"##### Distribution at pos {focus_pos}, step {step}")
-            dist = distribution_at(decoded, step, int(focus_pos), trace_topk_used)
-            pre_dist = pre_distribution_at(decoded, step, int(focus_pos), trace_topk_used)
-            if dist.empty:
-                st.info("No trace at this (step, position).")
-            else:
-                top1_prob = float(dist["prob"].iloc[0])
-                entropy = -sum(p * math.log(max(p, 1e-12)) for p in dist["prob"])
-                m1, m2 = st.columns(2)
-                m1.metric("top-1 prob (post)", f"{top1_prob:.3f}")
-                m2.metric("entropy (post)", f"{entropy:.3f}",
-                          help="lower = more committed; higher = more uncertain")
-
-                if not pre_dist.empty:
-                    st.caption("**After steering** (what sampler saw)")
-
-                def _dist_chart(df, color_scheme):
-                    return (
-                        alt.Chart(df)
-                        .mark_bar()
-                        .encode(
-                            x=alt.X("prob:Q", scale=alt.Scale(domain=[0, 1]), title="probability"),
-                            y=alt.Y("display:N", sort="-x", title=None),
-                            color=alt.Color(
-                                "prob:Q",
-                                scale=alt.Scale(scheme=color_scheme, domain=[0, 1]),
-                                legend=None,
-                            ),
-                            tooltip=[
-                                alt.Tooltip("token:N", title="token"),
-                                alt.Tooltip("prob:Q", title="prob", format=".4f"),
-                            ],
-                        )
-                        .properties(height=max(200, 26 * len(df)))
-                    )
-
-                chart = _dist_chart(dist, "blues")
-                st.altair_chart(chart, use_container_width=True)
-
-                if not pre_dist.empty:
-                    st.caption("**Before steering** (natural model distribution)")
-                    pre_top1 = float(pre_dist["prob"].iloc[0])
-                    pre_ent = -sum(p * math.log(max(p, 1e-12)) for p in pre_dist["prob"])
-                    pm1, pm2 = st.columns(2)
-                    pm1.metric("top-1 prob (pre)", f"{pre_top1:.3f}")
-                    pm2.metric("entropy (pre)", f"{pre_ent:.3f}")
-                    pre_chart = _dist_chart(pre_dist, "greens")
-                    st.altair_chart(pre_chart, use_container_width=True)
-
-                st.caption(
-                    "Tokens shown with `·` for spaces and `⏎` for newlines so you can "
-                    "see whitespace candidates. Scrub the **step** slider above and "
-                    "watch the bars collapse onto the winner."
-                )
-
-            # Full distribution over ALL timesteps for the focused position: this is the
-            # per-step top-k data the single-step bars above are sliced from, shown as
-            # stacked bands so you can see the mass migrate onto the winner as it denoises.
-            st.markdown(f"##### Candidate distribution at pos {focus_pos} across all steps")
-            traj_is_steered = int(focus_pos) in steered_set
-            traj_df = topk_at_position_frame(
-                decoded, int(focus_pos), trace_topk_used, prefer_pre=traj_is_steered
-            )
-            if traj_df.empty:
-                st.info("No trace for this position.")
-            else:
-                long = traj_df.reset_index().melt("step", var_name="token", value_name="prob")
-                area = (
-                    alt.Chart(long)
-                    .mark_area()
-                    .encode(
-                        x=alt.X("step:Q", title="denoising step"),
-                        y=alt.Y("prob:Q", stack="zero",
-                                scale=alt.Scale(domain=[0, 1]), title="probability"),
-                        color=alt.Color("token:N", title="candidate token"),
-                        order=alt.Order("prob:Q", sort="descending"),
-                        tooltip=[alt.Tooltip("step:Q", title="step"),
-                                 alt.Tooltip("token:N", title="token"),
-                                 alt.Tooltip("prob:Q", title="prob", format=".3f")],
-                    )
-                    .properties(height=240)
-                )
-                st.altair_chart(area, use_container_width=True)
-                st.caption(
-                    ("**Natural** (pre-intervention) distribution — the model's genuine "
-                     "uncertainty, not the forced spike. "
-                     if traj_is_steered else "Post-intervention top-k distribution. ")
-                    + "Each band is one candidate token's probability at that step; the "
-                    "whole top-k distribution for this position, every timestep at once."
-                )
 
             st.divider()
             st.markdown("#### Streaming-process diagnostics")
@@ -1813,8 +1685,6 @@ if active_tab == "Convergence":
                 )
                 rk = final_rank_frame(decoded)
                 if not rk.empty:
-                    rk = rk.copy()
-                    rk["highlight"] = rk["position"] == int(focus_pos)
                     lines = (
                         alt.Chart(rk)
                         .mark_line(interpolate="step-after")
@@ -1823,23 +1693,13 @@ if active_tab == "Convergence":
                             y=alt.Y("rank:Q", title="rank of final-winning token (1 = top)",
                                     scale=alt.Scale(reverse=True)),
                             detail="position:N",
-                            color=alt.Color(
-                                "highlight:N",
-                                scale=alt.Scale(domain=[True, False], range=["#b91c1c", "#cbd5e1"]),
-                                legend=None,
-                            ),
-                            size=alt.Size(
-                                "highlight:N",
-                                scale=alt.Scale(domain=[True, False], range=[3, 1]),
-                                legend=None,
-                            ),
+                            color=alt.Color("position:N", legend=None),
                             tooltip=["step", "position", "rank"],
                         )
                         .properties(height=320)
                     )
                     st.altair_chart(lines, use_container_width=True)
                     st.caption(
-                        f"Red line = focused position ({int(focus_pos)}). "
                         "Y-axis is reversed: rank 1 (the eventual winner) is on top."
                     )
     
@@ -1892,18 +1752,29 @@ if active_tab == "Convergence":
             )
             stride = max(1, len(all_steps) // 24)
             sampled = all_steps[::stride]
+            if all_steps[0] not in sampled:
+                sampled.insert(0, all_steps[0])
             if all_steps[-1] not in sampled:
                 sampled.append(all_steps[-1])
+            first_step = all_steps[0]
             rows_html = []
             for s in sampled:
-                canvas = _step_canvas_html(decoded, s, all_positions, steered_set, focus=int(focus_pos))
+                canvas = _step_canvas_html(decoded, s, all_positions, steered_set)
                 highlight = "background:#fff7d6;" if s == step else ""
+                if s == first_step:
+                    step_label = (
+                        f"<span style='font-weight:700;color:#4f46e5'>step {s:>3}</span>"
+                        f"<span style='display:block;font-size:9px;color:#a5b4fc;"
+                        f"letter-spacing:0.04em'>start</span>"
+                    )
+                else:
+                    step_label = f"step {s:>3}"
                 rows_html.append(
                     f"<div style='display:flex;align-items:center;gap:10px;"
                     f"padding:4px 6px;border-bottom:1px solid #eee;"
                     f"{highlight}font-family:monospace;font-size:13px'>"
                     f"<div style='width:64px;color:#888;font-size:11px'>"
-                    f"step {s:>3}</div>"
+                    f"{step_label}</div>"
                     f"<div>{canvas}</div></div>"
                 )
             # Film-strip lives in the same iframe as the main canvas so token clicks

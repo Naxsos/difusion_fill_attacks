@@ -113,6 +113,7 @@ while IFS= read -r line; do
       --start-pos "${positions[@]}" \
       --step "$step" \
       --mode "$mode" \
+      --no-baseline \
       --trace \
       --trace-file "$OUTDIR/${tag}.json" \
       > "$OUTDIR/${tag}.log" 2>&1 || echo "FAILED: $tag" >> "$OUTDIR/errors.txt"

@@ -301,6 +301,11 @@ def build_parser() -> argparse.ArgumentParser:
              "later target overrides the earlier one once both are active",
     )
     parser.add_argument(
+        "--no-baseline", action="store_true",
+        help="skip the unsteered baseline generation (a full extra forward pass that is "
+             "only printed, never graded) -- halves cost for bulk sweeps",
+    )
+    parser.add_argument(
         "--trace", action="store_true",
         help="record + print the top tokens/probabilities at every denoising step, "
              "so you can track back through how each position firmed up",
@@ -334,11 +339,14 @@ def run_experiment(args: "SteerConfig | argparse.Namespace", tokenizer) -> dict:
     trace = args.trace or args.trace_file is not None
     where = {"host": args.host, "port": args.port}
 
-    # 1. Baseline: what the model says on its own.
+    # 1. Baseline: what the model says on its own. Skippable (--no-baseline) for
+    # bulk sweeps where only the steered result is graded -- the baseline is a full
+    # extra generation and is never used downstream (only printed here).
     print("\nPROMPT:", args.prompt)
     seed = getattr(args, "seed", 0)
-    base = steer(args.prompt, tokens=[], positions=[], seed=seed, **where)
-    print("baseline:", base["text"])
+    if not getattr(args, "no_baseline", False):
+        base = steer(args.prompt, tokens=[], positions=[], seed=seed, **where)
+        print("baseline:", base["text"])
 
     # 2. Steer the target string(s) into place, tokenized + auto-positioned.
     n = len(args.target)
